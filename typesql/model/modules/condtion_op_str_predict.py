@@ -25,7 +25,6 @@ class CondOpStrPredictor(nn.Module):
             # in_size = N_word
             
             in_size = N_word+int(N_word/2)
-            #in_size = N_word+N_word
         else:
             in_size = N_word+N_word
         self.cond_opstr_lstm = nn.LSTM(input_size=in_size, hidden_size=int(N_h/2),

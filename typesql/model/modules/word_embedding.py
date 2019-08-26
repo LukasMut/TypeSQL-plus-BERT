@@ -81,7 +81,7 @@ class WordEmbedding(nn.Module):
             elif not is_list and BERT:
                 # OLD APPROACH (without rejoining into TypeSQL tokens)
                 # there is no need to have a backup zeros vector since BERT embeddings
-                # use WordPiece tokenization and should thus have embeddings for every (sub)word
+                # use WordPiece tokenization and should thus have embeddings for every (sub-)word
                 q_val = list(map(lambda x:self.word_emb_bert.get(x, np.zeros(self.N_word, dtype=np.float32)), one_q))
             else:
                 #print(one_q)
@@ -95,7 +95,7 @@ class WordEmbedding(nn.Module):
                             if BERT:
                             # OLD APPROACH (without rejoining into TypeSQL tokens)
                             # there is no need to have a backup zeros vector since BERT embeddings
-                            # use WordPiece tokenization and should thus have embeddings for every (sub)word
+                            # use WordPiece tokenization and should thus have embeddings for every (sub-)word
                                 emb_list.append(self.word_emb_bert.get(w, np.zeros(self.N_word, dtype=np.float32)))
                             else:
                                 emb_list.append(self.word_emb.get(w, np.zeros(self.N_word, dtype=np.float32)))
@@ -104,7 +104,7 @@ class WordEmbedding(nn.Module):
                         if BERT:
                         # OLD APPROACH (without rejoining into TypeSQL tokens)
                         # there is no need to have a backup zeros vector since BERT embeddings
-                        # use WordPiece tokenization and should thus have embeddings for every (sub)word
+                        # use WordPiece tokenization and should thus have embeddings for every (sub-)word
                             emb_list.append(self.word_emb_bert.get(ws[0], np.zeros(self.N_word, dtype=np.float32)))
                         else:
                             emb_list.append(self.word_emb.get(ws[0], np.zeros(self.N_word, dtype=np.float32)))

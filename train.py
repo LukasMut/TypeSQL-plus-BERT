@@ -24,7 +24,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     #N_word=600
-    N_word = 100
+    N_word=100
     B_word=42
     if args.toy:
         USE_SMALL=True
