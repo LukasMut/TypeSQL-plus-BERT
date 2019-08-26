@@ -22,8 +22,7 @@ class SelCondPredictor(nn.Module):
             # that's why in_size has to be "N_word"
             # in_size = N_word
             
-            in_size = N_word+int(N_word/2)
-            #in_size = N_word+N_word
+            in_size = N_word #+int(N_word/2)
         else:
             in_size = N_word+N_word
         self.selcond_lstm = nn.LSTM(input_size=in_size, hidden_size=int(N_h/2),
@@ -60,8 +59,8 @@ class SelCondPredictor(nn.Module):
         # OLD APPROACH (without rejoining into TypeSQL tokens)
         # Check whether BERT embeddings alone are sufficient
         # FOR BERT implementation, don't concatenate word with type embeddings
-        # x_emb_concat = x_emb_var
-        x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
+        x_emb_concat = x_emb_var
+        #x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
         e_col, _ = run_lstm(self.selcond_name_enc, col_inp_var, col_len)
         h_enc, _ = run_lstm(self.selcond_lstm, x_emb_concat, x_len)
 
