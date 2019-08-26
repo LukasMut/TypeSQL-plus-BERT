@@ -1,18 +1,26 @@
+This repository was forked from this repo: https://github.com/taoyds/typesql
+
+Most of the code is based on [TypeSQL](https://github.com/taoyds/typesql) and [SQLNet](https://github.com/xiaojunxu/SQLNet). 
+Please cite it both TypeSQL and SQLNet if you use this code.
+
+
 ## TypeSQL
 
-Source code accompanying our NAACL 2018 paper:[TypeSQL: Knowledge-based Type-Aware Neural Text-to-SQL Generation
+Source code accompanying TypeSQL's NAACL 2018 paper:[TypeSQL: Knowledge-based Type-Aware Neural Text-to-SQL Generation
 ](https://arxiv.org/abs/1804.09769)
 
 #### Environment Setup
 
-1. The code uses Python 2.7 and [Pytorch 0.2.0](https://pytorch.org/previous-versions/) GPU.
+1. The code uses Python 3.7 and [Pytorch 0.2.0](https://pytorch.org/previous-versions/) and [Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers)..
 2. Install Python dependency: `pip install -r requirements.txt`
-3. Install Pytorch 0.2.0: `conda install pytorch=0.2.0 cuda91 -c pytorch`. Replace cuda91 to whichever cuda version you have.
+3. Install Pytorch: `pip install pytorch'.
+4. Install Pytorch Transformers: `pip install pytorch-transformers`. Go to their repo for more information about requirements and dependencies.
 
 #### Download Data and Embeddings
 
 1. Download the zip data file at the [Google Drive](https://drive.google.com/file/d/1CGIRCjwf2bgmWl3UyjY1yJpP4nU---Q0/view?usp=sharing), and put it in the root dir.
 2. Download the pretrained [Glove](https://nlp.stanford.edu/data/wordvecs/glove.42B.300d.zip) and the [paraphrase embedding](https://drive.google.com/file/d/1iWTowxEG1-KZyq-fHP6cb6dNqMh4eHiN/view?usp=sharing) `para-nmt-50m/data/paragram_sl999_czeng.txt`. Put the unziped glove and para-nmt-50m folders in the root dir.
+3. Use the BERT model from [Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers).
 
 #### Train Models
 
@@ -55,4 +63,4 @@ python data_process_train_dev.py --tok [output json file generated at step 2] --
 
 #### Acknowledgement
 
-The implementation is based on [SQLNet](https://github.com/xiaojunxu/SQLNet). Please cite it too if you use this code.
+The implementation is based on [TypeSQL](https://github.com/taoyds/typesql) and [SQLNet](https://github.com/xiaojunxu/SQLNet). Please cite it too if you use this code.
