@@ -1,7 +1,7 @@
 This repository was forked from this repo: https://github.com/taoyds/typesql
 
 Most of the code is based on [TypeSQL](https://github.com/taoyds/typesql) and [SQLNet](https://github.com/xiaojunxu/SQLNet). 
-Please cite it both TypeSQL and SQLNet if you use this code.
+Please cite both TypeSQL and SQLNet if you use this code.
 
 
 ## TypeSQL
