@@ -501,4 +501,5 @@ def load_bert_dicts(file_tok, file_emb):
         id2embed = json.loads(f.read())
     id2tok = {int(idx):tok for idx, tok in id2tok.items()}
     id2embed = {int(idx):np.array(embedding) for idx, embedding in id2embed.items()}
+    assert len(id2tok) == len(id2embed)
     return id2tok, id2embed
