@@ -256,7 +256,6 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
 
             if pred_sel:
                 sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel)
-
             if pred_cond:
                 cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var,
                                                     gt_where, gt_cond, sel_cond_score)
