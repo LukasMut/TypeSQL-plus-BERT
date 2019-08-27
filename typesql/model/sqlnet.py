@@ -207,14 +207,21 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                         gt_where, gt_cond)
         elif self.db_content == 0:
             x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=True)
-            #x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True)
-            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True)
-            agg_emb_var = self.embed_layer.gen_agg_batch(q_ids) # BERT
-            #agg_emb_var = self.embed_layer.gen_agg_batch(q)
+            
+            #IDEA: what if we use GloVe embeddings to compute aggregate score (as it seems if 
+            #      context does not matter at all for predicting the correct aggregate value) ?
+            
+            x_emb_var_agg, _ = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
+            
+            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False) # try BERT ?
+            
+            # don't use BERT context embeddings to predict aggregate value in SELECT clause 
+            agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
+            
             max_x_len = max(x_len)
             if pred_agg:
                 #x_type_agg_emb_var, _ = self.agg_type_embed_layer.gen_xc_type_batch(q_type, is_list=True)
-                agg_score = self.agg_pred(x_emb_var, x_len, agg_emb_var, col_inp_var, col_len)
+                agg_score = self.agg_pred(x_emb_var_agg, x_len, agg_emb_var, col_inp_var, col_len)
 
             if pred_sel:
                 x_type_sel_emb_var, _ = self.sel_type_embed_layer.gen_xc_type_batch(q_type, is_list=True)
@@ -228,15 +235,24 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
 
         else:
             x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=True)
-            #x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True)
-            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True)
-            x_type_emb_var, x_type_len = self.embed_layer.gen_x_batch(q_type, col, is_list=True, is_q=True, BERT=False) # no BERT context embeddings for types
-            col_type_inp_var, col_type_len = self.embed_layer.gen_x_batch(col_type, col_type, is_list=True)
-            agg_emb_var = self.embed_layer.gen_agg_batch(q_ids)
-            #agg_emb_var = self.embed_layer.gen_agg_batch(q) # if not BERT
+            
+            #IDEA: what if we use GloVe embeddings to compute aggregate score (as it seems if 
+            #      context does not matter at all for predicting the correct aggregate value) ?
+            
+            x_emb_var_agg, _ = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
+            
+            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False) # try BERT?
+            
+            x_type_emb_var, x_type_len = self.embed_layer.gen_x_batch(q_type, col, is_list=True, is_q=True, BERT=False) # no BERT context embeddings for types (!) - there is no context to disentangle
+            
+            col_type_inp_var, col_type_len = self.embed_layer.gen_x_batch(col_type, col_type, is_list=True, BERT=False)
+            
+            # don't use BERT context embeddings to predict aggregate value in SELECT clause 
+            agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
+            
             max_x_len = max(x_len)
             if pred_agg:
-                agg_score = self.agg_pred(x_emb_var, x_len, agg_emb_var, col_inp_var, col_len)
+                agg_score = self.agg_pred(x_emb_var_agg, x_len, agg_emb_var, col_inp_var, col_len)
 
             if pred_sel:
                 sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel)

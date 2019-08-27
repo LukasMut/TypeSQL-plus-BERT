@@ -174,8 +174,6 @@ class WordEmbedding(nn.Module):
         for b in range(B):
             if self.trainable:
                 ct_val = list(map(lambda x:self.w2i.get(x, 0), agg_ops))
-            elif self.word_emb_bert:   
-                ct_val = list(map(lambda x:self.word_emb_bert.get(x, np.zeros(self.N_word, dtype=np.float32)), agg_ops))
             else:
                 ct_val = list(map(lambda x:self.word_emb.get(x, np.zeros(self.N_word, dtype=np.float32)), agg_ops))
             ret.append(ct_val)
