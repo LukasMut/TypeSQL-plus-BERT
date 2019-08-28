@@ -28,11 +28,40 @@ Source code accompanying TypeSQL's NAACL 2018 paper:[TypeSQL: Knowledge-based Ty
   python train.py --sd saved_model_kg
 ```
 
+  1.1 To use BERT embeddings:
+
+  ```
+    mkdir saved_model_kg
+    python train.py --sd saved_model_kg --BERT True
+  ```
+
+  1.2 To concatenate BERT with Type embeddings:
+
+  ```
+    mkdir saved_model_kg
+    python train.py --sd saved_model_kg --BERT True --types True (false, if you want to use BERT embeddings only - no concatenation)
+  ```
+
+
 2. To use DB content types:
 ```
    mkdir saved_model_con
    python train.py --sd saved_model_con --db_content 1
 ```
+
+  2.1 To use BERT embeddings:
+
+  ```
+    mkdir saved_model_con
+    python train.py --sd saved_model_con --db_content 1 --BERT True
+  ```
+
+  2.2 To concatenate BERT with Type embeddings:
+
+  ```
+    mkdir saved_model_kg
+    python train.py --sd saved_model_con --db_content 1 --BERT True --types True (false, if you want to use BERT embeddings only - no concatenation)
+  ```
 
 #### Test Models
 
