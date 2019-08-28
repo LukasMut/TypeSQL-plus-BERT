@@ -17,6 +17,7 @@ class CondOpStrPredictor(nn.Module):
         self.max_tok_num = max_tok_num
         self.max_col_num = max_col_num
         self.gpu = gpu
+        self.types = types
 
         if db_content == 0:
             
@@ -103,7 +104,7 @@ class CondOpStrPredictor(nn.Module):
         else:
             chosen_col_gt = [ [x[0] for x in one_gt_cond] for one_gt_cond in gt_cond]
         
-        if types:
+        if self.types:
             # with type embeddings concatentation
             x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
         else:
@@ -134,7 +135,7 @@ class CondOpStrPredictor(nn.Module):
 
         #Predict the string of conditions
         
-        if types:
+        if self.types:
             xt_str_enc = self.cond_str_x_type(x_type_emb_var)
 
         col_emb = []
@@ -160,7 +161,7 @@ class CondOpStrPredictor(nn.Module):
             g_ext = g_str_s.unsqueeze(3)
             col_ext = col_emb.unsqueeze(2).unsqueeze(2)
             
-            if types:
+            if self.types:
                 # with type embeddings concatenation
                 ht_ext = xt_str_enc.unsqueeze(1).unsqueeze(1)
                 cond_str_score = self.cond_str_out(
@@ -196,15 +197,15 @@ class CondOpStrPredictor(nn.Module):
                 g_str_s = g_str_s_flat.view(B, 4, 1, self.N_h)
                 g_ext = g_str_s.unsqueeze(3)
                 
-                if types:
+                if self.types:
                     # with type embeddings concatenation
                     ht_ext = xt_str_enc.unsqueeze(1).unsqueeze(1)
-                    cond_str_score = self.cond_str_out(
+                    cur_cond_str_score = self.cond_str_out(
                         self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext)
                         + self.cond_str_out_col(col_ext) + self.cond_str_out_ht(ht_ext)).squeeze()                
                 else:
                     # without type embeddings concatenation
-                    cond_str_score = self.cond_str_out(
+                    cur_cond_str_score = self.cond_str_out(
                         self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext)
                         + self.cond_str_out_col(col_ext)).squeeze()
 

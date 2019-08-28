@@ -15,6 +15,7 @@ class SelCondPredictor(nn.Module):
         super(SelCondPredictor, self).__init__()
         self.N_h = N_h
         self.gpu = gpu
+        self.types = types
 
         if db_content == 0:
             
@@ -27,6 +28,7 @@ class SelCondPredictor(nn.Module):
             
         else:
             in_size = N_word+N_word
+            
         self.selcond_lstm = nn.LSTM(input_size=in_size, hidden_size=int(N_h/2),
                 num_layers=N_depth, batch_first=True,
                 dropout=0.3, bidirectional=True)
@@ -58,7 +60,7 @@ class SelCondPredictor(nn.Module):
         B = len(x_len)
         #Predict the selection condition
         
-        if types:
+        if self.types:
             # with type embeddings concatentation
             x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
         else:

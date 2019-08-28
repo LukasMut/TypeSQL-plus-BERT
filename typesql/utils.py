@@ -146,7 +146,7 @@ def epoch_train(model, optimizer, batch_size, sql_data, table_data, pred_entry, 
 
         q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type = \
                 to_batch_seq(sql_data, table_data, perm, st, ed, db_content, BERT = BERT)
-        gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq, BERT = BERT)
+        gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
         gt_sel_seq = [x[1] for x in ans_seq]
         gt_agg_seq = [x[0] for x in ans_seq]
         score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
@@ -175,19 +175,14 @@ def epoch_exec_acc(model, batch_size, sql_data, table_data, db_path, db_content)
             to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True)
         raw_q_seq = [x[0] for x in raw_data]
         raw_col_seq = [x[1] for x in raw_data]
-        # uncomment line below for BERT implementation
-        gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq, BERT = True)
-        #gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
+        gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
         query_gt, table_ids = to_batch_query(sql_data, perm, st, ed)
         gt_sel_seq = [x[1] for x in ans_seq]
         gt_agg_seq = [x[0] for x in ans_seq]
         score = model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True))
-        #pred_queries = model.gen_query(score, q_seq, col_seq,
-        #        raw_q_seq, raw_col_seq, (True, True, True))
-        # uncomment line below for BERT implementation
         pred_queries = model.gen_query(score, q_seq, col_seq,
-                raw_q_seq, raw_col_seq, (True, True, True), BERT = True)
-
+                raw_q_seq, raw_col_seq, (True, True, True))
+        
         for idx, (sql_gt, sql_pred, tid) in enumerate(
                 zip(query_gt, pred_queries, table_ids)):
             ret_gt = engine.execute(tid, sql_gt['sel'], sql_gt['agg'], sql_gt['conds'])
@@ -219,7 +214,7 @@ def epoch_acc(model, batch_size, sql_data, table_data, pred_entry, db_content, e
         gt_sel_seq = [x[1] for x in ans_seq]
         score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry)
         pred_queries = model.gen_query(score, q_seq, col_seq,
-                raw_q_seq, raw_col_seq, pred_entry, BERT = BERT)
+                raw_q_seq, raw_col_seq, pred_entry)
         one_err, tot_err = model.check_acc(raw_data, pred_queries, query_gt, pred_entry, error_print)
 
         one_acc_num += (ed-st-one_err)

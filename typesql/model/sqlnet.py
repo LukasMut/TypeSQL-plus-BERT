@@ -26,6 +26,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         self.trainable_emb = trainable_emb
         self.db_content = db_content
         self.BERT = BERT
+        self.types = types
 
         self.gpu = gpu
         self.N_h = N_h
@@ -172,10 +173,10 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         sel_cond_score = None
         cond_op_str_score = None
         
-        ## CHANGES
-        ## separate lists for q_ids and q_toks only needed for BERT implementation
-        q_ids = list(map(lambda id_tok:id_tok[0], q))
-        q_toks = list(map(lambda id_tok:id_tok[1], q))
+
+        if self.BERT:
+            q_ids = list(map(lambda id_tok:id_tok[0], q))
+            q_toks = list(map(lambda id_tok:id_tok[1], q))
 
         #Predict aggregator
         if self.trainable_emb:
@@ -442,7 +443,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
 
 
     def gen_query(self, score, q, col, raw_q, raw_col,
-            pred_entry, verbose=False, BERT=False):
+            pred_entry, verbose=False):
         def merge_tokens(tok_list, raw_tok_str):
             """
             tok_list: list of string words in current cond
