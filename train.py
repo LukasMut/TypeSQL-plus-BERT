@@ -48,30 +48,35 @@ if __name__ == '__main__':
     
     ## FOR BERT implementation: SQL data must be updated with (rejoined)
     ## tokens pre-processed by BERT's WordPiece model and corresponding BERT ids
-    
-    sql_data_updated = update_sql_data(sql_data)
-    sql_data = remove_nonequal_questions(sql_data_updated)
-    val_sql_data_updated = update_sql_data(val_sql_data)
-    val_sql_data = remove_nonequal_questions(val_sql_data_updated)
-    test_sql_data_updated = update_sql_data(test_sql_data)
-    test_sql_data = remove_nonequal_questions(test_sql_data_updated)
-    print("SQL data has been updated and now consists of bert-preprocessed tokens and corresponding IDs")
-    print()
+    if args.BERT:    
+        sql_data_updated = update_sql_data(sql_data)
+        sql_data = remove_nonequal_questions(sql_data_updated)
+        val_sql_data_updated = update_sql_data(val_sql_data)
+        val_sql_data = remove_nonequal_questions(val_sql_data_updated)
+        test_sql_data_updated = update_sql_data(test_sql_data)
+        test_sql_data = remove_nonequal_questions(test_sql_data_updated)
+        print("SQL data has been updated and now consists of bert-preprocessed tokens and corresponding IDs")
+        print()
+        print("Loading bert embeddings...")
+        id2tok, word_emb_bert = load_bert_dicts("./id2tok.json", "./id2embed.json")
+        print("Bert embeddings have been loaded into memory")
+        bert_tuple = (id2tok, word_emb_bert)
+    else:
+        bert_tuple = None
+        
     #word_emb = load_word_emb('glove/glove.%dB.%dd.txt'%(B_word,N_word), \
     #        load_used=args.train_emb, use_small=USE_SMALL)
+    
     if args.db_content == 0:
         word_emb = load_word_and_type_emb('glove/glove.6B.50d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt',\
                                             val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
     else:
         word_emb = load_concat_wemb('glove/glove.6B.50d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt')
     
-    print("Loading bert embeddings...")
-    id2tok, word_emb_bert = load_bert_dicts("./id2tok.json", "./id2embed.json")
-    print("Bert embeddings have been loaded into memory")
-    
+
     # Lines below are for BERT implementations
     model = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                  word_emb_bert=(id2tok, word_emb_bert), BERT=args.BERT, types=args.types)
+                  word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
 
     #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay = 0)
