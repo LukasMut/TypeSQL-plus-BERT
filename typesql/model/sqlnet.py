@@ -214,6 +214,8 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             x_emb_var_agg, _ = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
             
             #TODO: try BERT embeddings to represent columns
+            col_inp_var_bert, col_len_bert = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=self.BERT)
+            
             col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
             
             # don't use BERT context embeddings to predict aggregate value in SELECT clause 
@@ -225,13 +227,11 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
 
             if pred_sel:
                 x_type_sel_emb_var, _ = self.sel_type_embed_layer.gen_xc_type_batch(q_type, is_list=True)
-                sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_sel_emb_var,
-                                               gt_sel)
+                sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var_bert, col_len_bert, x_type_sel_emb_var, gt_sel)
 
             if pred_cond:
                 x_type_cond_emb_var, _ = self.cond_type_embed_layer.gen_xc_type_batch(q_type, is_list=True)
-                cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_cond_emb_var,
-                                                     gt_where, gt_cond, sel_cond_score)
+                cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var_bert, col_len_bert, x_type_cond_emb_var, gt_where, gt_cond, sel_cond_score)
 
         else:
             x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
@@ -241,11 +241,12 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             x_emb_var_agg, _ = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
             
             #TODO: try BERT embeddings to represent columns
+            col_inp_var_bert, col_len_bert = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=self.BERT)
+            
             col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
             
             x_type_emb_var, x_type_len = self.embed_layer.gen_x_batch(q_type, col, is_list=True, is_q=True, BERT=False) # no BERT context embeddings for types (!) - there is no context to disentangle (!)
             
-            #TODO: try BERT embeddings to represent columns
             col_type_inp_var, col_type_len = self.embed_layer.gen_x_batch(col_type, col_type, is_list=True, BERT=False) 
             
             # don't use BERT context embeddings to predict aggregate value in SELECT clause 
@@ -257,10 +258,10 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                 agg_score = self.agg_pred(x_emb_var_agg, x_len, agg_emb_var, col_inp_var, col_len)
 
             if pred_sel:
-                sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel)
+                sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var_bert, col_len_bert, x_type_emb_var, gt_sel)
+                
             if pred_cond:
-                cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var,
-                                                    gt_where, gt_cond, sel_cond_score)
+                cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var_bert, col_len_bert, x_type_emb_var, gt_where, gt_cond, sel_cond_score)
 
         return (agg_score, sel_cond_score, cond_op_str_score)
 

@@ -45,6 +45,7 @@ if __name__ == '__main__':
     sql_data, table_data, val_sql_data, val_table_data, \
             test_sql_data, test_table_data, \
             TRAIN_DB, DEV_DB, TEST_DB = load_dataset(use_small=USE_SMALL)
+    print()
     
     ## FOR BERT implementation: SQL data must be updated with (rejoined)
     ## tokens pre-processed by BERT's WordPiece model and corresponding BERT ids

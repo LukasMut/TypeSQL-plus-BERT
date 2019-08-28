@@ -435,7 +435,6 @@ def update_sql_data(sql_data):
     idx_to_pop = list()
     n_original_questions = len(sql_data)
     print("Number of questions before computing BERT token representations:", n_original_questions)
-    print()
     for i, (question, tok_id, tok_question) in enumerate(zip(sql_data, tok_ids, tok_questions)):
         try:
             assert len(question['question_tok']) == len(tok_id)  == len(tok_question)
@@ -455,13 +454,8 @@ def update_sql_data(sql_data):
     n_removed_questions = n_original_questions-len(sql_data)
     
     print("Number of questions in pre-processed dataset (after rejoining):", len(sql_data))
-    print()
     print("Questions that could not be rejoined into TypeSQL tokens:", n_removed_questions)
-    print()
     print("{}% of the original questions were removed".format(round((n_removed_questions / n_original_questions)*100, 2)))
-    print()
-    print("SQL data has been updated with BERT ids (tokens are the same as TypeSQL's tokens)")
-    print()
     return sql_data
 
 def remove_nonequal_questions(sql_data):
@@ -473,6 +467,7 @@ def remove_nonequal_questions(sql_data):
             sql_data.pop(i)
             count += 1
     print("{} questions had different tokens and thus were removed from dataset".format(count))
+    print("SQL data has been updated with BERT ids (tokens are the same as TypeSQL's tokens)")
     print()
     return sql_data
 
