@@ -18,7 +18,7 @@ if __name__ == '__main__':
             help='set model save directory.')
     parser.add_argument('--db_content', type=int, default=0,
             help='0: use knowledge graph type, 1: use db content to get type info')
-    parser.add_arugment('--BERT', type=bool, default=True,
+    parser.add_argument('--BERT', type=bool, default=True,
             help='False: use GloVe "no context" embeddings, True: use BERT context embeddings')
     parser.add_argument('--types', type=bool, default=False,
             help='False: only use BERT context embeddings, True: concatenate BERT with Type embeddings')
