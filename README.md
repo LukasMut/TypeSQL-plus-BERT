@@ -3,7 +3,7 @@ Please cite both TypeSQL and SQLNet if you use this code.
 
 ## TypeSQL with BERT
 
-BERT byte-pair encoded tokens had to be rejoined into WikiSQL tokens as otherwise the SQL generation task will not work (due to BERT tokenizer's sub-word splitting). Go to branch `BERT_TypeSQL` to see implementation and run Type SQL with BERT instead of GloVe embeddings.
+BERT byte-pair encoded tokens (using a WordPiece Model) had to be rejoined into WikiSQL tokens as otherwise the SQL generation task will not work (due to BERT tokenizer's sub-word splitting). Go to branch `BERT_TypeSQL` to see implementation and run Type SQL with BERT instead of GloVe embeddings.
 
 ## TypeSQL with POS
 
