@@ -211,7 +211,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
 
             # don't use BERT embeddings to predict aggregate value in SELECT clause
             # there's no context to disentangle (!)
-            x_emb_var_agg, _ = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
+            x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
             
             #TODO: try BERT embeddings to represent columns
             col_inp_var_bert, col_len_bert = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=self.BERT)
@@ -223,7 +223,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             
             max_x_len = max(x_len)
             if pred_agg:
-                agg_score = self.agg_pred(x_emb_var_agg, x_len, agg_emb_var, col_inp_var, col_len)
+                agg_score = self.agg_pred(x_emb_var_agg, x_len_agg, agg_emb_var, col_inp_var, col_len)
 
             if pred_sel:
                 x_type_sel_emb_var, _ = self.sel_type_embed_layer.gen_xc_type_batch(q_type, is_list=True)
@@ -238,7 +238,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             
             # don't use BERT embeddings to predict aggregate value in SELECT clause
             # there's no context to disentangle (!)
-            x_emb_var_agg, _ = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
+            x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
             
             #TODO: try BERT embeddings to represent columns
             col_inp_var_bert, col_len_bert = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=self.BERT)
@@ -255,7 +255,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             max_x_len = max(x_len)
             
             if pred_agg:
-                agg_score = self.agg_pred(x_emb_var_agg, x_len, agg_emb_var, col_inp_var, col_len)
+                agg_score = self.agg_pred(x_emb_var_agg, x_len_agg, agg_emb_var, col_inp_var, col_len)
 
             if pred_sel:
                 sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var_bert, col_len_bert, x_type_emb_var, gt_sel)

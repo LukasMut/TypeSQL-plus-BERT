@@ -349,7 +349,7 @@ def bert_token_ids(tok_questions, tok_ids, sql_data, arbitrary_id = 99999):
     return rejoined_toks, rejoined_ids
 
 def bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, dim = 100, arbitrary_id = 99999,
-                    matrix = False, tensor = False):
+                    merge = 'avg', matrix = False, tensor = False):
     """
         Input: torch tensors of token ids and segment ids.
         Computation: load pre-trained BERT model (weights),
@@ -392,7 +392,7 @@ def bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, dim = 100, ar
             new_ids, new_toks, new_embeddings, new_id = merge_token_ids_embed(tok_q, 
                                                                               tok_id, 
                                                                               arbitrary_id,
-                                                                              merge = 'sum',
+                                                                              merge = merge,
                                                                               bert_embeddings = tok_embeddings)
             arbitrary_id = new_id   
             try:
