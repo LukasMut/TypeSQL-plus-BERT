@@ -1,6 +1,14 @@
 Most of the code is based on [TypeSQL](https://github.com/taoyds/typesql) and [SQLNet](https://github.com/xiaojunxu/SQLNet). 
 Please cite both TypeSQL and SQLNet if you use this code.
 
+## TypeSQL with BERT:
+
+BERT byte-pair encoded tokens had to be rejoined into WikiSQL tokens as otherwise the SQL generation task will not work (due to BERT tokenizer's sub-word splitting). Go to branch `BERT_TypeSQL` to see implementation and run Type SQL with BERT instead of GloVe embeddings.
+
+## TypeSQL with POS
+
+POS tags of natural language questions were tagged using NLTK's POS tagger. 
+Go to branch `POS_TypeSQL` to see implementation and run TypeSQL with POS embeddings as additional features. 
 
 ## TypeSQL
 
