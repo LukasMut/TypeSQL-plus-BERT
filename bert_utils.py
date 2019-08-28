@@ -14,7 +14,11 @@ def concatenate_sql_data(sql_data_train, sql_data_val):
     sql_data_train.extend(sql_data_val)
     return sql_data_train
 
-def count_context_toks(tok = 'the'): 
+def count_context_toks(tok = 'the'):
+    """
+        Input: arbitrary token
+        Output: number of times the token was used in different contexts
+    """
     unique_toks = set()
     for sent_id in sent_idxs:
         string = tokenizer.decode(sent_id[0])
@@ -40,10 +44,8 @@ def bert_preprocessing(questions, tok2ids_tuple = False, flatten = False):
                 tuples of (tokens, ids) either per token-id-pair or as a list per sentence.
     """
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    #tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
     questions = list(map(lambda q: '[CLS]' + ' ' + ' '.join(q) + ' ' +'[SEP]', questions))
     tok_questions = [tokenizer.tokenize(q) for q in questions]
-    #tok_questions = [rejoin_toks(q) for q in tok_questions]
     indexed_tokens = [torch.tensor([tokenizer.convert_tokens_to_ids(tok_q)], dtype=torch.long) \
                       for tok_q in tok_questions]
     segment_ids = [torch.tensor([np.ones(len(q), dtype=int)],dtype=torch.long) \
@@ -135,8 +137,6 @@ def chunk_indexes(span):
 def remove_elements(token_ids, tokens, embeddings, idx, chunk_ids):
     token_ids.pop(idx)
     tokens.pop(idx)
-    # remove element at position "idx" in torch tensor - 
-    # equivalent to classic Python "vector.pop(idx)"
     if len(embeddings) > 0:
         embeddings = torch.cat([embeddings[:idx], embeddings[idx:]])
     if len(chunk_ids) > 0:
@@ -365,7 +365,6 @@ def bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, dim = 100, ar
     #                              output_attentions=True)
     
     model = BertModel.from_pretrained('bert-base-uncased')
-    #model = RobertaModel.from_pretrained('roberta-base')
     
     model.eval()
     id2embed = dict()
@@ -420,7 +419,7 @@ def drop_data(tok_questions, tok_ids, sql_data, idx_to_drop):
         tok_ids.pop(idx-k)
         sql_data.pop(idx-k)
         k += 1
-    assert len(sql_data) == n_questions-n_errors # check whether correct number of erroneous questions was dropped
+    assert len(sql_data) == n_questions-n_errors, 'Incorrect number of questions was dropped'
     return tok_questions, tok_ids, sql_data
 
 def update_sql_data(sql_data):
@@ -479,13 +478,11 @@ def bert_pipeline(sql_data_train, sql_data_val):
     return id2tok, id2embed
 
 def save_embeddings_as_json(id2tok, id2embed):
-    # save token id : bert embeddings dictionary as .json
     # np.arrays have to be converted into lists to be .json serializable
     id2embed = {int(idx):embedding.tolist() for idx, embedding in id2embed.items()}
     id2tok = {int(idx):tok for idx, tok in id2tok.items()}
     with open('id2embed.json', 'w') as json_file:
         json.dump(id2embed, json_file)
-    # save token id : bert token dictionary as .json
     with open('id2tok.json', 'w') as json_file:
         json.dump(id2tok, json_file)
         
