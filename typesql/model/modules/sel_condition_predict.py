@@ -11,18 +11,20 @@ except ModuleNotFoundError:
     from typesql.model.modules.net_utils import run_lstm, col_name_encode
 
 class SelCondPredictor(nn.Module):
-    def __init__(self, N_word, N_h, N_depth, gpu, db_content):
+    def __init__(self, N_word, N_h, N_depth, gpu, db_content, types):
         super(SelCondPredictor, self).__init__()
         self.N_h = N_h
         self.gpu = gpu
 
         if db_content == 0:
-            # OLD APPROACH (without rejoining into TypeSQL tokens)
-            # FOR BERT, we don't concatenate type and word embeddings anymore, but only use BERT embeddings
-            # that's why in_size has to be "N_word"
-            # in_size = N_word
             
-            in_size = N_word #+int(N_word/2)
+            if types:
+                # with type embeddings concatentation
+                in_size = N_word+int(N_word/2)
+            else:
+                # without type embeddings concatenation
+                in_size = N_word
+            
         else:
             in_size = N_word+N_word
         self.selcond_lstm = nn.LSTM(input_size=in_size, hidden_size=int(N_h/2),
@@ -56,11 +58,12 @@ class SelCondPredictor(nn.Module):
         B = len(x_len)
         #Predict the selection condition
         
-        # OLD APPROACH (without rejoining into TypeSQL tokens)
-        # Check whether BERT embeddings alone are sufficient
-        # FOR BERT implementation, don't concatenate word with type embeddings
-        x_emb_concat = x_emb_var
-        #x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
+        if types:
+            # with type embeddings concatentation
+            x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
+        else:
+            x_emb_concat = x_emb_var
+            
         e_col, _ = run_lstm(self.selcond_name_enc, col_inp_var, col_len)
         h_enc, _ = run_lstm(self.selcond_lstm, x_emb_concat, x_len)
 

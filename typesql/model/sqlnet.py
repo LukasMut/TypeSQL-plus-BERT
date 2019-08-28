@@ -21,10 +21,11 @@ except ModuleNotFoundError:
 
 class SQLNet(nn.Module): # inheriting from parent class nn.Module
     def __init__(self, word_emb, N_word, N_h=120, N_depth=2,
-            gpu=False, trainable_emb=False, db_content=0, word_emb_bert=None, BERT=False):
-        super(SQLNet, self).__init__() # use init method from parent class
+            gpu=False, trainable_emb=False, db_content=0, word_emb_bert=None, BERT=False, types=False):
+        super(SQLNet, self).__init__() # use init method from parent class (i.e., nn.Module)
         self.trainable_emb = trainable_emb
         self.db_content = db_content
+        self.BERT = BERT
 
         self.gpu = gpu
         self.N_h = N_h
@@ -60,11 +61,11 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         self.agg_pred = AggPredictor(N_word, N_h, N_depth)
 
         #Predict select column + condition number and columns
-        self.selcond_pred = SelCondPredictor(N_word, N_h, N_depth, gpu, db_content)
+        self.selcond_pred = SelCondPredictor(N_word, N_h, N_depth, gpu, db_content, types)
 
         #Predict condition operators and string values
         self.op_str_pred = CondOpStrPredictor(N_word, N_h, N_depth,
-                self.max_col_num, self.max_tok_num, gpu, db_content)
+                self.max_col_num, self.max_tok_num, gpu, db_content, types)
 
         self.CE = nn.CrossEntropyLoss()
         self.softmax = nn.Softmax()
@@ -128,7 +129,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         return cur_seq
 
 
-    def generate_gt_where_seq(self, q, col, query, BERT=False):
+    def generate_gt_where_seq(self, q, col, query):
         """
         cur_seq is the indexes (in question toks) of string value in each where cond
         """
@@ -137,12 +138,10 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             cur_values = []
             st = cur_query.index(u'WHERE')+1 if \
                     u'WHERE' in cur_query else len(cur_query)
-            if BERT:
-                all_toks = [['<BEG>']] + cur_q[1] + [['<END>']] #[['<BEG>']] + [[self.idx2word[idx[0]]] for idx in cur_q[0]] + [['<END>']]
+            if self.BERT:
+                # all_toks = [['[CLS]']] + cur_q[1] + [['[SEP]']]
+                all_toks = [['<BEG>']] + cur_q[1] + [['<END>']]
             else:
-                # USE the line below, if you want to use BERT byte-pair encodings to generate sequence
-                # the upper if-clause will not work (as lengths don't align)
-                # all_toks = [['<BEG>']] + cur_q[1] + [['<END>']]
                 all_toks = [['<BEG>']] + cur_q + [['<END>']]
             while st < len(cur_query):
                 ed = len(cur_query) if 'AND' not in cur_query[st:]\
@@ -182,7 +181,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         if self.trainable_emb:
                          
             if pred_agg:
-                x_emb_var, x_len = self.agg_embed_layer.gen_x_batch(q_ids, col, BERT=True)
+                x_emb_var, x_len = self.agg_embed_layer.gen_x_batch(q_ids, col, BERT=False)
                 col_inp_var, col_name_len, col_len = \
                         self.agg_embed_layer.gen_col_batch(col)
                 max_x_len = max(x_len)
@@ -190,7 +189,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                         col_name_len, col_len, col_num, gt_sel=gt_sel)
 
             if pred_sel:
-                x_emb_var, x_len = self.sel_embed_layer.gen_x_batch(q_ids, col, BERT=True)
+                x_emb_var, x_len = self.sel_embed_layer.gen_x_batch(q_ids, col, BERT=self.BERT)
                 col_inp_var, col_name_len, col_len = \
                         self.sel_embed_layer.gen_col_batch(col)
                 max_x_len = max(x_len)
@@ -198,29 +197,29 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                         col_name_len, col_len, col_num)
 
             if pred_cond:
-                x_emb_var, x_len = self.cond_embed_layer.gen_x_batch(q_ids, col, BERT=True)
+                x_emb_var, x_len = self.cond_embed_layer.gen_x_batch(q_ids, col, BERT=self.BERT)
                 col_inp_var, col_name_len, col_len = \
                         self.cond_embed_layer.gen_col_batch(col)
                 max_x_len = max(x_len)
                 cond_score = self.cond_pred(x_emb_var, x_len, col_inp_var,
                         col_name_len, col_len, col_num,
                         gt_where, gt_cond)
+                
         elif self.db_content == 0:
-            x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=True)
-            
-            #IDEA: what if we use GloVe embeddings to compute aggregate score (as it seems if 
-            #      context does not matter at all for predicting the correct aggregate value) ?
-            
+            x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
+
+            # don't use BERT embeddings to predict aggregate value in SELECT clause
+            # there's no context to disentangle (!)
             x_emb_var_agg, _ = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
             
-            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False) # try BERT ?
+            #TODO: try BERT embeddings to represent columns
+            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
             
             # don't use BERT context embeddings to predict aggregate value in SELECT clause 
             agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
             
             max_x_len = max(x_len)
             if pred_agg:
-                #x_type_agg_emb_var, _ = self.agg_type_embed_layer.gen_xc_type_batch(q_type, is_list=True)
                 agg_score = self.agg_pred(x_emb_var_agg, x_len, agg_emb_var, col_inp_var, col_len)
 
             if pred_sel:
@@ -234,23 +233,25 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                                                      gt_where, gt_cond, sel_cond_score)
 
         else:
-            x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=True)
+            x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
             
-            #IDEA: what if we use GloVe embeddings to compute aggregate score (as it seems if 
-            #      context does not matter at all for predicting the correct aggregate value) ?
-            
+            # don't use BERT embeddings to predict aggregate value in SELECT clause
+            # there's no context to disentangle (!)
             x_emb_var_agg, _ = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
             
-            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False) # try BERT?
+            #TODO: try BERT embeddings to represent columns
+            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
             
-            x_type_emb_var, x_type_len = self.embed_layer.gen_x_batch(q_type, col, is_list=True, is_q=True, BERT=False) # no BERT context embeddings for types (!) - there is no context to disentangle
+            x_type_emb_var, x_type_len = self.embed_layer.gen_x_batch(q_type, col, is_list=True, is_q=True, BERT=False) # no BERT context embeddings for types (!) - there is no context to disentangle (!)
             
-            col_type_inp_var, col_type_len = self.embed_layer.gen_x_batch(col_type, col_type, is_list=True, BERT=False)
+            #TODO: try BERT embeddings to represent columns
+            col_type_inp_var, col_type_len = self.embed_layer.gen_x_batch(col_type, col_type, is_list=True, BERT=False) 
             
             # don't use BERT context embeddings to predict aggregate value in SELECT clause 
             agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
             
             max_x_len = max(x_len)
+            
             if pred_agg:
                 agg_score = self.agg_pred(x_emb_var_agg, x_len, agg_emb_var, col_inp_var, col_len)
 
@@ -482,10 +483,11 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                     ret = ret + ' '
                 ret = ret + tok
             return ret.strip()
-        ## CHANGES
-        ## separate lists for q_ids and q_toks only needed for BERT implementation
-        q_ids = list(map(lambda id_tok:id_tok[0], q))
-        q_toks = list(map(lambda id_tok:id_tok[1], q))
+
+        if self.BERT:
+            q_ids = list(map(lambda id_tok:id_tok[0], q))
+            q_toks = list(map(lambda id_tok:id_tok[1], q))
+            
         pred_agg, pred_sel, pred_cond = pred_entry
         agg_score, sel_cond_score, cond_op_str_score = score
 
@@ -509,11 +511,9 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                 cur_query['conds'] = []
                 cond_num = np.argmax(cond_num_score[b])
                 if self.BERT:
-                    ### CHANGES ###
+                    # maybe rather [['[CLS]']] + q_toks[b] + [['[SEP]']] ?
                     all_toks = [['<BEG>']] + q_toks[b] + [['<END>']] 
-                    #all_toks = [['<BEG>']] + [[self.idx2word[idx[0]]] for idx in q_ids[b]] + [['<END>']]
                 else:
-                    #all_toks = [['<BEG>']] + q_toks[b] + [['<END>']] #q_toks necessary for BERT implementation
                     all_toks = [['<BEG>']] + q[b] + [['<END>']]
                 max_idxes = np.argsort(-cond_col_score[b])[:cond_num]
                 for idx in range(cond_num):
@@ -524,7 +524,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                     for str_score in cond_str_score[b][idx]:
                         str_tok = np.argmax(str_score[:len(all_toks)])
                         str_val = all_toks[str_tok]
-                        if str_val == ['<END>']: #or str_val == ['[SEP]']:
+                        if str_val == ['<END>'] or str_val == ['[SEP]']:
                             break
                         #add string word/grouped words to current cond str tokens ["w1", "w2" ...]
                         cur_cond_str_toks.append(str_val)

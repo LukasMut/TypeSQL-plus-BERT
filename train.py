@@ -18,6 +18,10 @@ if __name__ == '__main__':
             help='set model save directory.')
     parser.add_argument('--db_content', type=int, default=0,
             help='0: use knowledge graph type, 1: use db content to get type info')
+    parser.add_arugment('--BERT', type=bool, default=True,
+            help='False: use GloVe "no context" embeddings, True: use BERT context embeddings')
+    parser.add_argument('--types', type=bool, default=False,
+            help='False: only use BERT context embeddings, True: concatenate BERT with Type embeddings')
     parser.add_argument('--train_emb', action='store_true',
             help='Train word embedding.')
 
@@ -67,8 +71,8 @@ if __name__ == '__main__':
     
     # Lines below are for BERT implementations
     model = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                  word_emb_bert=(id2tok, word_emb_bert), BERT = True)
-    #model = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content)  
+                  word_emb_bert=(id2tok, word_emb_bert), BERT=args.BERT, types=args.types)
+
     #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay = 0)
 
@@ -85,8 +89,7 @@ if __name__ == '__main__':
 
 
     #initial accuracy
-    init_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, BERT=True)
-    #init_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content)
+    init_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT)
     best_agg_acc = init_acc[1][0]
     best_agg_idx = 0
     best_sel_acc = init_acc[1][1]
@@ -108,11 +111,11 @@ if __name__ == '__main__':
         print('Epoch %d @ %s'%(i+1, datetime.datetime.now()))
         print(' Loss = %s'%epoch_train(
                 model, optimizer, BATCH_SIZE,
-                sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=True))
+                sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT))
         print(' Train acc_qm: %s\n breakdown result: %s'%epoch_acc(
-                model, BATCH_SIZE, sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=True))
+                model, BATCH_SIZE, sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT))
 
-        val_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, False, BERT=True) #for detailed error analysis, pass True to the end (second last argument before BERT)
+        val_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, False, BERT=args.BERT) #for detailed error analysis, pass True to the end (second last argument before BERT)
         print(' Dev acc_qm: %s\n breakdown result: %s'%val_acc)
         if TRAIN_AGG:
             if val_acc[1][0] > best_agg_acc:
