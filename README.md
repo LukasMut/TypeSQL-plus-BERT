@@ -3,7 +3,7 @@ Please cite both TypeSQL and SQLNet if you use this code.
 
 ## TypeSQL with BERT
 
-BERT byte-pair encoded tokens had to be rejoined into WikiSQL tokens as otherwise the SQL generation task will not work (due to BERT tokenizer's sub-word splitting).
+BERT byte-pair encoded tokens had to be rejoined into WikiSQL tokens as otherwise the SQL generation task will not work (due to BERT tokenizer's sub-word splitting)
 
 ## TypeSQL
 
@@ -14,7 +14,7 @@ Source code accompanying TypeSQL's NAACL 2018 paper:[TypeSQL: Knowledge-based Ty
 
 1. The code uses Python 3.7, [Pytorch 1.1.0](https://pytorch.org/previous-versions/) and [Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers)..
 2. Install Python dependency: `pip install -r requirements.txt`
-3. Install Pytorch: `pip install pytorch`.
+3. Install Pytorch: `pip install pytorch`
 4. Install Pytorch Transformers: `pip install pytorch-transformers`. Go to their repo for more information about requirements and dependencies.
 
 #### Download Data and Embeddings
