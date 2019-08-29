@@ -327,7 +327,7 @@ def drop_data(tok_questions, tok_ids, sql_data, idx_to_drop):
         tok_ids.pop(idx-k)
         sql_data.pop(idx-k)
         k += 1
-    assert len(sql_data) == n_questions-n_errors, 'Incorrect number of questions was dropped'
+    assert len(sql_data) == n_questions-n_errors, 'Incorrect number of erroneous questions was dropped'
     return tok_questions, tok_ids, sql_data
 
 def update_sql_data(sql_data):
@@ -351,13 +351,10 @@ def update_sql_data(sql_data):
     tok_questions, tok_ids, sql_data = drop_data(tok_questions, tok_ids, sql_data, idx_to_pop) 
     
     for i, (question, tok_id, tok_question) in enumerate(zip(sql_data, tok_ids, tok_questions)):
-        try:
-            assert len(sql_data[i]['question_tok']) == len(tok_id)  == len(tok_question)
-            sql_data[i]['bert_tokenized_question'] = tok_question
-            sql_data[i]['bert_token_ids'] = tok_id #list(tok_id[0].numpy())
-        except:
-            raise Exception("Removing incorrectly rejoined questions did not work. Check function!")
-    
+        assert len(sql_data[i]['question_tok']) == len(tok_id)  == len(tok_question), "Removing incorrectly rejoined questions did not work. Check function!"
+        sql_data[i]['bert_tokenized_question'] = tok_question
+        sql_data[i]['bert_token_ids'] = tok_id #list(tok_id[0].numpy())
+
     n_removed_questions = n_original_questions-len(sql_data)
     
     print("Number of questions in pre-processed dataset (after rejoining):", len(sql_data))
