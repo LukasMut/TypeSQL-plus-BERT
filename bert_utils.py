@@ -9,6 +9,7 @@ import numpy as np
 
 from pytorch_transformers import *
 from typesql.utils import *
+from retokenizer import Retokenizer
 
 def concatenate_sql_data(sql_data_train, sql_data_val):
     sql_data_train.extend(sql_data_val)
@@ -134,115 +135,23 @@ def chunk_indexes(span):
                         indexes.append(i+1)
         return chunks
 
-def remove_elements(token_ids, tokens, embeddings, idx, chunk_ids):
-    token_ids.pop(idx)
-    tokens.pop(idx)
-    if len(embeddings) > 0:
-        embeddings = torch.cat([embeddings[:idx], embeddings[idx:]])
-    if len(chunk_ids) > 0:
-        chunk_ids = [[el-1 for el in chunk] for chunk in chunk_ids]
-    return token_ids, tokens, embeddings, chunk_ids
-
 def check_type(chunk_id):
     for idx in chunk_id:
         if idx == None:
             return False
     return True
 
-## function only important for updating sql data (no embeddings) to compute token rejoining step faster ##
-def rejoin_token_ids(bert_toks, bert_ids, bert_embeddings, chunk_ids, arbitrary_id, merge):
-    new_toks = list()
-    new_ids = list()
-    for i, (bert_tok, bert_id) in enumerate(zip(bert_toks, bert_ids)):
-        if len(chunk_ids) > 0:
-            for j, chunk_id in enumerate(chunk_ids):
-                if i in chunk_id:
-                    new_ids.append(arbitrary_id)
-                    arbitrary_id += 1
-                    chunk_ids.pop(j)
-                    new_tok = ''.join([bert_toks[idx] for idx in chunk_id])
-                    new_tok = re.sub(r'#+','', new_tok)
-                    new_toks.append(new_tok)
-                    tok_span = len(chunk_id)
-                    if tok_span > 2:
-                        pop_idx = 0
-                        for k in range(tok_span-1):
-                            bert_ids, bert_toks, _, chunk_ids = remove_elements(\
-                                bert_ids,bert_toks,bert_embeddings,chunk_id[k]-pop_idx,chunk_ids)
-                            pop_idx += 1
-                    elif tok_span == 2:
-                        bert_ids, bert_toks, _, chunk_ids = remove_elements(\
-                            bert_ids,bert_toks,bert_embeddings,chunk_id[0],chunk_ids)
-                    break
-                else:
-                    new_ids.append(bert_id)    
-                    new_toks.append(bert_tok)
-                    break
-        else:
-            new_ids.append(bert_id)    
-            new_toks.append(bert_tok)
-    return new_ids, new_toks, arbitrary_id
-
-def rejoin_token_ids_embed(bert_toks, bert_ids, bert_embeddings, chunk_ids, arbitrary_id, merge):
-    """
-        Input: BERT tokens pre-processed according to WordPiece-Model, corresponding BERT ids,
-               BERT context embeddings, indexes in token list to be rejoined, arbitrary id that 
-               will be used instead of original BERT id for rejoined token, 
-               string that denotes whether BERT context vectors should be summed or averaged after
-               rejoining BERT tokens into TypeSQL tokens.
-        Output: Rejoined tokens, corresponding ids, BERT embeddings and new arbitrary id to start at
-                next iteration. 
-    """
-    new_toks = list()
-    new_ids = list()
-    new_embeddings = list()
-    for i, (bert_tok, bert_id, bert_embedding) in enumerate(zip(bert_toks, bert_ids, bert_embeddings)):
-        if len(chunk_ids) > 0:
-            for j, chunk_id in enumerate(chunk_ids):
-                if i in chunk_id:
-                    new_ids.append(arbitrary_id)
-                    arbitrary_id += 1
-                    chunk_ids.pop(j)
-                    new_tok = ''.join([bert_toks[idx] for idx in chunk_id])
-                    new_tok = re.sub(r'#+','', new_tok)
-                    new_toks.append(new_tok)
-                    if merge == 'sum':
-                        new_embedding = np.sum(np.array([bert_embeddings[idx].numpy() for 
-                                                         idx in chunk_id]), axis=0)
-                    elif merge == 'avg':
-                        new_embedding = np.mean(np.array([bert_embeddings[idx].numpy() for 
-                                                         idx in chunk_id]), axis=0)
-                    else:
-                        raise Exception("Bert embeddings should be summed or averaged.")
-                    new_embeddings.append(new_embedding)
-                    tok_span = len(chunk_id)
-                    if tok_span > 2:
-                        pop_idx = 0
-                        for k in range(tok_span-1):
-                            bert_ids, bert_toks, bert_embeddings, chunk_ids = remove_elements(\
-                                bert_ids,bert_toks,bert_embeddings,chunk_id[k]-pop_idx,chunk_ids)
-                            pop_idx += 1
-                    elif tok_span == 2:
-                        bert_ids, bert_toks, bert_embeddings, chunk_ids = remove_elements(\
-                            bert_ids,bert_toks,bert_embeddings,chunk_id[0],chunk_ids)
-                    break
-                else:
-                    new_ids.append(bert_id)    
-                    new_toks.append(bert_tok)
-                    new_embeddings.append(bert_embedding.numpy())
-                    break
-        else:
-            new_ids.append(bert_id)    
-            new_toks.append(bert_tok)
-            new_embeddings.append(bert_embedding.numpy())
-    return new_ids, new_toks, new_embeddings, arbitrary_id
-
-def merge_token_ids_embed(bert_toks, bert_ids, arbitrary_id, merge, bert_embeddings = list()):
+def merge_token_ids_embed(bert_toks, bert_ids, arbitrary_id, merge, bert_embeddings=list()):
     month_names = list(map(lambda x: calendar.month_name[x].lower(), range(1,13)))
     bert_toks = bert_toks[1:-1]
     bert_ids = bert_ids[1:-1]
+
     if len(bert_embeddings) > 0:
         bert_embeddings = bert_embeddings[1:-1]
+        retokenizer = Retokenizer(merge, embeddings=True)
+    else:
+        retokenizer = Retokenizer(merge, embeddings=False)
+        
     ids_to_rejoin = list()
     for i, bert_tok in enumerate(bert_toks):  
         if i < len(bert_toks)-1:
@@ -265,7 +174,7 @@ def merge_token_ids_embed(bert_toks, bert_ids, arbitrary_id, merge, bert_embeddi
                     ids_to_rejoin.append(i)
                     ids_to_rejoin.append(i+1)
                     ids_to_rejoin.append(i+2)
-                    ids_to_rejoin.append(i+3)                                                                                                                                                                                                                 
+                    ids_to_rejoin.append(i+3)                                                                                       
                 elif re.search(r",|:", bert_tok) and re.search(r"[0-9]+", bert_toks[i-1]) and re.search(r"[0-9]+", bert_toks[i+1]) and not ((re.search(r",", bert_toks[i+2]) and re.search(r"[0-9]+", bert_toks[i+3])) or (re.search(r",", bert_toks[i-2]) and re.search(r"[0-9]+", bert_toks[i-3])) or bert_toks[i-2] in month_names or (re.search(r'-', bert_toks[i-2]) and re.search(r'-', bert_toks[i+2]))):
                     ids_to_rejoin.append(i)
                     ids_to_rejoin.append(i+1)
@@ -287,24 +196,23 @@ def merge_token_ids_embed(bert_toks, bert_ids, arbitrary_id, merge, bert_embeddi
                 ids_to_rejoin.append(i)
                 if i < len(bert_toks)-1:
                     ids_to_rejoin.append(i+1)
-            
+    
     if len(ids_to_rejoin) > 0:
         chunk_ids = chunk_indexes(ids_to_rejoin)
         if len(bert_embeddings) > 0:
-            new_ids, new_toks, new_embeddings, new_id = rejoin_token_ids_embed(bert_toks, 
+            new_ids, new_toks, new_embeddings, new_id = retokenizer.retokenize(bert_toks, 
                                                                                bert_ids, 
                                                                                bert_embeddings,
                                                                                chunk_ids,
-                                                                               arbitrary_id,
-                                                                               merge)
+                                                                               arbitrary_id)
             return new_ids, new_toks, new_embeddings, new_id
         else:
-            new_ids, new_toks, new_id = rejoin_token_ids(bert_toks, 
-                                                         bert_ids, 
-                                                         bert_embeddings,
-                                                         chunk_ids,
-                                                         arbitrary_id,
-                                                         merge)
+            
+            new_ids, new_toks, new_id = retokenizer.retokenize(bert_toks, 
+                                                               bert_ids, 
+                                                               bert_embeddings,
+                                                               chunk_ids,
+                                                               arbitrary_id)
             return new_ids, new_toks, new_id
     else:
         if len(bert_embeddings) > 0:
@@ -342,7 +250,7 @@ def bert_token_ids(tok_questions, tok_ids, sql_data, arbitrary_id = 99999):
     rejoined_ids = list()
     for i, (question, tok_q, tok_id) in enumerate(zip(sql_data, tok_questions, tok_ids)):
         tok_id = list(tok_id[0].numpy())
-        new_ids, new_toks, new_id = merge_token_ids_embed(tok_q, tok_id, arbitrary_id, merge = 'sum')
+        new_ids, new_toks, new_id = merge_token_ids_embed(tok_q, tok_id, arbitrary_id, merge=None)
         arbitrary_id = new_id  
         rejoined_toks.append(new_toks)
         rejoined_ids.append(new_ids)
@@ -359,7 +267,7 @@ def bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, dim = 100, ar
         Output: dictionary that maps token ids (keys) 
                 to their corresponding BERT context embeddings (values).
     """
-    ## TO DO: check what's necessary to ouput all hidden states
+    #TODO: check what's necessary to ouput all hidden states
     # model = BertModel.from_pretrained('bert-base-uncased',
     #                              output_hidden_states=True,
     #                              output_attentions=True)
