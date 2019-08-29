@@ -47,7 +47,13 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
     mkdir saved_model_kg
     python train.py --sd saved_model_kg --BERT True --types True (False, if you want to use BERT embeddings only - no concatenation)
   ```
-
+  
+  1.3 To concatenate BERT with Type embeddings and use an ensemble (instead of a single network):
+  
+ ```
+    mkdir saved_model_kg
+    python train.py --sd saved_model_kg --BERT True --types True -- ensemble True
+ ``` 
 
 2. To use DB content types:
 ```
@@ -68,7 +74,14 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
     mkdir saved_model_kg
     python train.py --sd saved_model_con --db_content 1 --BERT True --types True (False, if you want to use BERT embeddings only - no concatenation)
   ```
-
+  
+  2.3 To concatenate BERT with Type embeddings and use an ensemble network (instead of a single model):
+  
+   ```
+    mkdir saved_model_kg
+    python train.py --sd saved_model_con --db_content 1 --BERT True --types True -- ensemble True
+   ``` 
+  
 #### Test Models
 
 1. Test Model with knowledge graph types:
