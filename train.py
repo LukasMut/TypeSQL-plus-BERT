@@ -22,6 +22,8 @@ if __name__ == '__main__':
             help='False: use GloVe "no context" embeddings, True: use BERT context embeddings')
     parser.add_argument('--types', type=bool, default=False,
             help='False: only use BERT context embeddings, True: concatenate BERT with Type embeddings')
+    parser.add_argument('--ensemble', type=bool, default=False,
+            help='False: single model, True: ensemble')
     parser.add_argument('--train_emb', action='store_true',
             help='Train word embedding.')
 
@@ -74,14 +76,28 @@ if __name__ == '__main__':
     else:
         word_emb = load_concat_wemb('glove/glove.6B.50d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt')
     
-
-    # Lines below are for BERT implementations
-    model = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                  word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
-
-    #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay = 0)
-
+    if args.ensemble:
+        model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
+        model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
+        
+        #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
+        optimizer_1 = torch.optim.Adam(model_1.parameters(), lr=learning_rate, weight_decay = 0)
+        optimizer_2 = torch.optim.Adam(model_2.parameters(), lr=learning_rate, weight_decay = 0)
+        
+        model = [model_1, model_2]
+        optimizer = [optimizer_1, optimizer_2]
+        
+    else:
+        model = [SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)]
+       
+        #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
+        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay = 0)
+    
+    assert isinstance(model, list), 'models have to be stored in list'
+    
     agg_m, sel_m, cond_m, agg_e, sel_e, cond_e = best_model_name(args)
 
     if args.train_emb: # Load pretrained model.
@@ -93,7 +109,6 @@ if __name__ == '__main__':
         print("Loading from %s"%cond_lm)
         model.cond_pred.load_state_dict(torch.load(cond_lm))
 
-
     #initial accuracy
     init_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT)
     best_agg_acc = init_acc[1][0]
@@ -103,15 +118,31 @@ if __name__ == '__main__':
     best_cond_acc = init_acc[1][2]
     best_cond_idx = 0
     print('Init dev acc_qm: %s\n  breakdown on (agg, sel, where): %s' % init_acc)
+        
     if TRAIN_AGG:
-        torch.save(model.agg_pred.state_dict(), agg_m)
-        torch.save(model.agg_type_embed_layer.state_dict(), agg_e)
+        if args.ensemble:
+            for net in model:
+                torch.save(net.agg_pred.state_dict(), agg_m)
+                torch.save(net.agg_type_embed_layer.state_dict(), agg_e)
+        else:
+            torch.save(model[0].agg_pred.state_dict(), agg_m)
+            torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e)
     if TRAIN_SEL:
-        torch.save(model.selcond_pred.state_dict(), sel_m)
-        torch.save(model.sel_type_embed_layer.state_dict(), sel_e)
+        if args.ensemble:
+            for net in model:
+                torch.save(net.selcond_pred.state_dict(), sel_m)
+                torch.save(net.sel_type_embed_layer.state_dict(), sel_e)         
+        else:
+            torch.save(model[0].selcond_pred.state_dict(), sel_m)
+            torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e)
     if TRAIN_COND:
-        torch.save(model.op_str_pred.state_dict(), cond_m)
-        torch.save(model.cond_type_embed_layer.state_dict(), cond_e)
+        if args.ensemble:
+            for net in model:
+                torch.save(net.op_str_pred.state_dict(), cond_m)
+                torch.save(net.cond_type_embed_layer.state_dict(), cond_e)    
+        else:
+            torch.save(model[0].op_str_pred.state_dict(), cond_m)
+            torch.save(model[0].cond_type_embed_layer.state_dict(), cond_e)
 
     for i in range(100):
         print('Epoch %d @ %s'%(i+1, datetime.datetime.now()))
@@ -123,41 +154,42 @@ if __name__ == '__main__':
 
         val_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, False, BERT=args.BERT) #for detailed error analysis, pass True to the end (second last argument before BERT)
         print(' Dev acc_qm: %s\n breakdown result: %s'%val_acc)
+        
         if TRAIN_AGG:
             if val_acc[1][0] > best_agg_acc:
                 best_agg_acc = val_acc[1][0]
                 best_agg_idx = i+1
-                torch.save(model.agg_pred.state_dict(),
+                torch.save(model[0].agg_pred.state_dict(),
                     args.sd + '/epoch%d.agg_model%s'%(i+1, args.suffix))
-                torch.save(model.agg_pred.state_dict(), agg_m)
+                torch.save(model[0].agg_pred.state_dict(), agg_m)
 
-            torch.save(model.agg_type_embed_layer.state_dict(),
+            torch.save(model[0].agg_type_embed_layer.state_dict(),
                                 args.sd + '/epoch%d.agg_embed%s'%(i+1, args.suffix))
-            torch.save(model.agg_type_embed_layer.state_dict(), agg_e)
+            torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e)
 
         if TRAIN_SEL:
             if val_acc[1][1] > best_sel_acc:
                 best_sel_acc = val_acc[1][1]
                 best_sel_idx = i+1
-                torch.save(model.selcond_pred.state_dict(),
+                torch.save(model[0].selcond_pred.state_dict(),
                     args.sd + '/epoch%d.sel_model%s'%(i+1, args.suffix))
-                torch.save(model.selcond_pred.state_dict(), sel_m)
+                torch.save(model[0].selcond_pred.state_dict(), sel_m)
 
-                torch.save(model.sel_type_embed_layer.state_dict(),
+                torch.save(model[0].sel_type_embed_layer.state_dict(),
                                 args.sd + '/epoch%d.sel_embed%s'%(i+1, args.suffix))
-                torch.save(model.sel_type_embed_layer.state_dict(), sel_e)
+                torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e)
 
         if TRAIN_COND:
             if val_acc[1][2] > best_cond_acc:
                 best_cond_acc = val_acc[1][2]
                 best_cond_idx = i+1
-                torch.save(model.op_str_pred.state_dict(),
+                torch.save(model[0].op_str_pred.state_dict(),
                     args.sd + '/epoch%d.cond_model%s'%(i+1, args.suffix))
-                torch.save(model.op_str_pred.state_dict(), cond_m)
+                torch.save(model[0].op_str_pred.state_dict(), cond_m)
 
-                torch.save(model.cond_type_embed_layer.state_dict(),
+                torch.save(model[0].cond_type_embed_layer.state_dict(),
                                 args.sd + '/epoch%d.cond_embed%s'%(i+1, args.suffix))
-                torch.save(model.cond_type_embed_layer.state_dict(), cond_e)
+                torch.save(model[0].cond_type_embed_layer.state_dict(), cond_e)
 
         print(' Best val acc = %s, on epoch %s individually'%(
                 (best_agg_acc, best_sel_acc, best_cond_acc),

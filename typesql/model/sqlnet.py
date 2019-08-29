@@ -214,7 +214,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             # don't use BERT embeddings to predict aggregate value in SELECT clause
             x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
             
-            # don't use BERT context embeddings to represent columns 
+            # don't use BERT context embeddings to represent columns (!)
             col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
             
             # don't use BERT context embeddings to predict aggregate value in SELECT clause 
@@ -239,7 +239,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             # don't use BERT embeddings to predict aggregate value in SELECT clause
             x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
             
-            # don't use BERT context embeddings to represent columns            
+            # don't use BERT context embeddings to represent columns (!)            
             col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
             
             # no BERT context embeddings for types - there is no context to disentangle (!)
@@ -247,7 +247,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             
             col_type_inp_var, col_type_len = self.embed_layer.gen_x_batch(col_type, col_type, is_list=True, BERT=False) 
             
-            # don't use BERT context embeddings to predict aggregate value in SELECT clause 
+            # don't use BERT context embeddings to predict aggregate value in SELECT clause (!)
             agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
             
             max_x_len = max(x_len)
@@ -489,14 +489,33 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             q_toks = list(map(lambda id_tok:id_tok[1], q))
             
         pred_agg, pred_sel, pred_cond = pred_entry
-        agg_score, sel_cond_score, cond_op_str_score = score
-        print("Aggregate score:", agg_score)
-        print("Select condition score:", sel_cond_score)
-        print("Condition op string score:", cond_op_str_score)
-        raise Exception
-        cond_num_score, sel_score, cond_col_score = [x.data.cpu().numpy() for x in sel_cond_score]
-        cond_op_score, cond_str_score = [x.data.cpu().numpy() for x in cond_op_str_score]
+        
+        if len(score) > 1:
+            agg_score_1, sel_cond_score_1, cond_op_str_score_1 = score[0]
+            agg_score_2, sel_cond_score_2, cond_op_str_score_2 = score[1]
+            
+            # soft voting ensemble computation (averaging over the outputs of the different models)
+            agg_score = torch.mean(torch.stack([agg_score_1, agg_score_2]),dim=0)
+            
+            cond_num_score_1, sel_score_1, cond_col_score_1 = [x.data.cpu().numpy() for x in sel_cond_score_1]
+            cond_num_score_2, sel_score_2, cond_col_score_2 = [x.data.cpu().numpy() for x in sel_cond_score_2]
+            cond_num_score =  np.mean((cond_num_score_1, cond_num_score_2),axis=0)
+            sel_score = np.mean((sel_score_1, sel_score_2),axis=0)
+            cond_col_score = np.mean((cond_col_score_1, cond_col_score_2),axis=0)
 
+            cond_op_score_1, cond_str_score_1 = [x.data.cpu().numpy() for x in cond_op_str_score_1]
+            cond_op_score_2, cond_str_score_2 = [x.data.cpu().numpy() for x in cond_op_str_score_2]
+            
+            #TODO: understand how the tensors "cond_op_score" and "cond_str_score" are represented;
+            #      maybe you have to average differently?
+            cond_op_score = np.mean((cond_op_score_1, cond_op_score_2),axis=0)
+            cond_str_score = np.mean((cond_str_score_1, cond_str_score_2),axis=0)
+            
+        else:
+            agg_score, sel_cond_score, cond_op_str_score = score[0]
+            cond_num_score, sel_score, cond_col_score = [x.data.cpu().numpy() for x in sel_cond_score]
+            cond_op_score, cond_str_score = [x.data.cpu().numpy() for x in cond_op_str_score]
+        
         ret_queries = []
         if pred_agg:
             B = len(agg_score)
