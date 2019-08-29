@@ -490,7 +490,10 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             
         pred_agg, pred_sel, pred_cond = pred_entry
         agg_score, sel_cond_score, cond_op_str_score = score
-
+        print("Aggregate score:", agg_score)
+        print("Select condition score:", sel_cond_score)
+        print("Condition op string score:", cond_op_str_score)
+        raise Exception
         cond_num_score, sel_score, cond_col_score = [x.data.cpu().numpy() for x in sel_cond_score]
         cond_op_score, cond_str_score = [x.data.cpu().numpy() for x in cond_op_str_score]
 
