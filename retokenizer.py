@@ -41,9 +41,9 @@ class Retokenizer:
         if self.embeddings:
             new_embeddings = list()
         else:
-            # create placeholder values for embeddings to compute loop
+            # create placeholder values for embeddings to compute loop over all arrays simultaneously
             bert_embeddings = [0 for _ in range(len(bert_toks))]
-            assert len(bert_toks) == len(bert_embeddings), 'lists must have same number of elements'
+            assert len(bert_toks) == len(bert_embeddings), 'arrays must have same number of elements'
         for i, (bert_tok, bert_id, bert_embedding) in enumerate(zip(bert_toks, bert_ids, bert_embeddings)):
             if len(chunk_ids) > 0:
                 for j, chunk_id in enumerate(chunk_ids):
@@ -62,7 +62,7 @@ class Retokenizer:
                                 new_embedding = np.mean(np.array([bert_embeddings[idx].numpy() for 
                                                                  idx in chunk_id]), axis=0)
                             else:
-                                raise Exception("Bert embeddings should be summed or averaged.")
+                                raise Exception("bert embeddings should be summed or averaged.")
                             new_embeddings.append(new_embedding)
                         tok_span = len(chunk_id)
                         if tok_span > 2:
