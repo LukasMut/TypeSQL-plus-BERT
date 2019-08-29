@@ -3,7 +3,7 @@ Please cite both TypeSQL and SQLNet if you use this code.
 
 ## TypeSQL with BERT
 
-BERT byte-pair encoded tokens had to be rejoined into WikiSQL tokens as otherwise the SQL generation task will not work (due to BERT tokenizer's sub-word splitting)
+BERT byte-pair encoded tokens had to be rejoined into WikiSQL tokens as otherwise the SQL generation task will not work (due to BERT tokenizer's sub-word splitting). See files `retokenize.py` and `bert_utils.py` for implementation.
 
 ## TypeSQL
 
