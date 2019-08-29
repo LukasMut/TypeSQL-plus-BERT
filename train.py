@@ -88,14 +88,15 @@ if __name__ == '__main__':
         
         model = [model_1, model_2]
         optimizer = [optimizer_1, optimizer_2]
-        
+        print("Ensemble network was initialized...")
     else:
         model = [SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
                       word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)]
        
         #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay = 0)
-    
+        print("Single model was initialized...")
+        
     assert isinstance(model, list), 'models have to be stored in list'
     
     agg_m, sel_m, cond_m, agg_e, sel_e, cond_e = best_model_name(args)
