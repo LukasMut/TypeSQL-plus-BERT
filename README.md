@@ -74,14 +74,14 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
   2.2 To concatenate BERT with Type embeddings:
 
   ```
-    mkdir saved_model_kg
+    mkdir saved_model_con
     python train.py --sd saved_model_con --db_content 1 --BERT True --types True (False, if you want to use BERT embeddings only - no concatenation)
   ```
   
   2.3 To concatenate BERT with Type embeddings and use an ensemble network (instead of a single model):
   
    ```
-    mkdir saved_model_kg
+    mkdir saved_model_con
     python train.py --sd saved_model_con --db_content 1 --BERT True --types True --ensemble True
    ``` 
   
