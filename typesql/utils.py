@@ -172,8 +172,8 @@ def epoch_train(models, optimizer, batch_size, sql_data, table_data, pred_entry,
             cum_loss += np.mean([loss.data.cpu().numpy() for loss in losses])*(ed-st)
         else:
             gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
-            score = [model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
-            gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq)]
+            score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
+            gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq)
             loss = model.loss(score, ans_seq, pred_entry, gt_where_seq)
             cum_loss += loss.data.cpu().numpy()*(ed - st)  # or just loss.item()*(ed - st)
 
