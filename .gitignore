@@ -75,3 +75,12 @@ saved_model_kg/epoch8.agg_embed
 saved_model_kg/epoch8.agg_model
 saved_model_kg/epoch9.agg_embed
 saved_model_kg/epoch5.agg_model
+typesql/__pycache__/utils.cpython-37.pyc
+typesql/model/__pycache__/sqlnet.cpython-37.pyc
+typesql/model/modules/__pycache__/condtion_op_str_predict.cpython-37.pyc
+typesql/model/modules/__pycache__/sel_condition_predict.cpython-37.pyc
+typesql/model/modules/__pycache__/word_embedding.cpython-37.pyc
+__pycache__/bert_utils.cpython-37.pyc
+__pycache__/retokenizer.cpython-37.pyc
+.ipynb_checkpoints/bert_embeddings-checkpoint.ipynb
+__pycache__/bert_utils.cpython-37.pyc
