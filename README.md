@@ -45,7 +45,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 
   ```
     mkdir saved_model_kg
-    python train.py --sd saved_model_kg --BERT True --types True (false, if you want to use BERT embeddings only - no concatenation)
+    python train.py --sd saved_model_kg --BERT True --types True (False, if you want to use BERT embeddings only - no concatenation)
   ```
 
 
@@ -66,7 +66,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 
   ```
     mkdir saved_model_kg
-    python train.py --sd saved_model_con --db_content 1 --BERT True --types True (false, if you want to use BERT embeddings only - no concatenation)
+    python train.py --sd saved_model_con --db_content 1 --BERT True --types True (False, if you want to use BERT embeddings only - no concatenation)
   ```
 
 #### Test Models
