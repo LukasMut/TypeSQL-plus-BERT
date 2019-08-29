@@ -10,7 +10,7 @@ Moreover, I extended TypeSQL's single model approach with an ensemble method (ac
 ## TypeSQL with POS ensemble
 
 POS tags of natural language questions were tagged using NLTK's POS tagger. 
-Go to branch `POS_TypeSQL` to see implementation and run TypeSQL with POS embeddings as additional features. 
+Go to branch `POS_TypeSQL` to see implementation and run an ensemble of TypeSQL with POS embeddings. 
 
 ## TypeSQL
 
