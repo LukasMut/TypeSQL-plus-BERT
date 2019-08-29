@@ -52,7 +52,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
   
  ```
     mkdir saved_model_kg
-    python train.py --sd saved_model_kg --BERT True --types True -- ensemble True
+    python train.py --sd saved_model_kg --BERT True --types True --ensemble True
  ``` 
 
 2. To use DB content types:
@@ -79,7 +79,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
   
    ```
     mkdir saved_model_kg
-    python train.py --sd saved_model_con --db_content 1 --BERT True --types True -- ensemble True
+    python train.py --sd saved_model_con --db_content 1 --BERT True --types True --ensemble True
    ``` 
   
 #### Test Models
