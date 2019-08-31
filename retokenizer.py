@@ -70,7 +70,7 @@ class Retokenizer:
                                 new_embedding = np.mean(np.array([bert_embeddings[idx].numpy() for 
                                                                  idx in chunk_id]), axis=0)
                             elif self.merge == 'max':
-                                stacked_embeddings = np.vstack([bert_embeddings[idx].numpy() for 
+                                stacked_embeddings = torch.stack([bert_embeddings[idx] for 
                                                                  idx in chunk_id])
                                 new_embedding = self.max_pooling(stacked_embeddings)
                             else:
