@@ -65,7 +65,7 @@ if __name__ == '__main__':
         print("Loading bert embeddings...")
         if args.merged == 'max':
             id2tok, word_emb_bert = load_bert_dicts("./id2tokMax.json", "./id2embedMax.json")
-        elif args.merged == 'avg:
+        elif args.merged == 'avg':
             id2tok, word_emb_bert = load_bert_dicts("./id2tokMean.json", "./id2embedMean.json")
         elif args.merged == 'sum':
             id2tok, word_emb_bert = load_bert_dicts("./id2tokSum.json", "./id2embedSum.json")

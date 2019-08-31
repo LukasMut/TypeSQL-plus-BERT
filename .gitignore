@@ -89,3 +89,5 @@ id2tokMean.json
 .ipynb_checkpoints/bert_embeddings-checkpoint.ipynb
 .ipynb_checkpoints/bert_embeddings-checkpoint.ipynb
 .ipynb_checkpoints/bert_embeddings-checkpoint.ipynb
+id2embedMax.json
+id2tokMax.json
