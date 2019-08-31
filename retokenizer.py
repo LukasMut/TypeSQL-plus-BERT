@@ -31,7 +31,7 @@ class Retokenizer:
         # transpose matrix to loop over column vectors
         for j, col in enumerate(mat.T):
             max_vec[j] += max(col)
-    return max_vec
+        return max_vec
     
     def retokenize(self, bert_toks, bert_ids, bert_embeddings, chunk_ids, arbitrary_id):
         """
