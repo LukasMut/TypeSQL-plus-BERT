@@ -25,6 +25,14 @@ class Retokenizer:
             chunk_ids = [[el-1 for el in chunk] for chunk in chunk_ids]
         return token_ids, tokens, embeddings, chunk_ids
     
+    @staticmethod
+    def max_pooling(mat):
+        max_vec = np.zeros(mat.shape[1])
+        # transpose matrix to loop over column vectors
+        for j, col in enumerate(mat.T):
+            max_vec[j] += max(col)
+    return max_vec
+    
     def retokenize(self, bert_toks, bert_ids, bert_embeddings, chunk_ids, arbitrary_id):
         """
             Input: BERT tokens pre-processed according to WordPiece-Model, corresponding BERT ids,
@@ -61,8 +69,12 @@ class Retokenizer:
                             elif self.merge == 'avg':
                                 new_embedding = np.mean(np.array([bert_embeddings[idx].numpy() for 
                                                                  idx in chunk_id]), axis=0)
+                            elif self.merge == 'max':
+                                stacked_embeddings = np.vstack([bert_embeddings[idx].numpy() for 
+                                                                 idx in chunk_id])
+                                max_embedding = self.max_pooling(stacked_embeddings)
                             else:
-                                raise Exception("bert embeddings should be summed or averaged.")
+                                raise Exception('Embeddings have to be summed, averaged or max-pooled')
                             new_embeddings.append(new_embedding)
                         tok_span = len(chunk_id)
                         if tok_span > 2:
