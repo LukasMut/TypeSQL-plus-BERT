@@ -80,7 +80,7 @@ if __name__ == '__main__':
         model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
                       word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
         model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=False) #args.types)
         
         #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
         optimizer_1 = torch.optim.Adam(model_1.parameters(), lr=learning_rate, weight_decay = 0)
