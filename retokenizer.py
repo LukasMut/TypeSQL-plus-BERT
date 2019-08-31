@@ -27,11 +27,11 @@ class Retokenizer:
     
     @staticmethod
     def max_pooling(mat):
-        max_vec = np.zeros(mat.shape[1])
-        # transpose matrix to loop over column vectors
-        for j, col in enumerate(mat.T):
-            max_vec[j] += max(col)
-        return max_vec
+        #max_vec = np.zeros(mat.shape[1])
+        #transpose matrix to loop over column vectors
+        #for j, col in enumerate(mat.T):
+        #    max_vec[j] += max(col)
+        return torch.max(mat,dim=0)[0].numpy()
     
     def retokenize(self, bert_toks, bert_ids, bert_embeddings, chunk_ids, arbitrary_id):
         """

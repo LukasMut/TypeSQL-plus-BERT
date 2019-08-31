@@ -20,8 +20,10 @@ if __name__ == '__main__':
             help='0: use knowledge graph type, 1: use db content to get type info')
     parser.add_argument('--BERT', type=bool, default=True,
             help='False: use GloVe "no context" embeddings, True: use BERT context embeddings')
+    parser.add_argument('--merged', type=str, default='max',
+            help='max: use max-pooled bert embeddings, avg: use averaged bert embeddings, sum: use summed bert embeddings')
     parser.add_argument('--types', type=bool, default=False,
-            help='False: only use BERT context embeddings, True: concatenate BERT with Type embeddings')
+            help='False: use BERT context embeddings only, True: concatenate BERT with Type embeddings')
     parser.add_argument('--ensemble', type=bool, default=False,
             help='False: single model, True: ensemble')
     parser.add_argument('--train_emb', action='store_true',
@@ -61,7 +63,14 @@ if __name__ == '__main__':
         print("SQL data has been updated and now consists of bert-preprocessed tokens and corresponding IDs")
         print()
         print("Loading bert embeddings...")
-        id2tok, word_emb_bert = load_bert_dicts("./id2tok.json", "./id2embed.json")
+        if args.merged == 'max':
+            id2tok, word_emb_bert = load_bert_dicts("./id2tokMax.json", "./id2embedMax.json")
+        elif args.merged == 'avg:
+            id2tok, word_emb_bert = load_bert_dicts("./id2tokMean.json", "./id2embedMean.json")
+        elif args.merged == 'sum':
+            id2tok, word_emb_bert = load_bert_dicts("./id2tokSum.json", "./id2embedSum.json")
+        else:
+            raise Exception('Only max-pooled, averaged or summed bert embeddings can be loaded into memory')
         print("Bert embeddings have been loaded into memory")
         bert_tuple = (id2tok, word_emb_bert)
     else:
