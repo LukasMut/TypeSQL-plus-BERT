@@ -72,7 +72,7 @@ class Retokenizer:
                             elif self.merge == 'max':
                                 stacked_embeddings = np.vstack([bert_embeddings[idx].numpy() for 
                                                                  idx in chunk_id])
-                                max_embedding = self.max_pooling(stacked_embeddings)
+                                new_embedding = self.max_pooling(stacked_embeddings)
                             else:
                                 raise Exception('Embeddings have to be summed, averaged or max-pooled')
                             new_embeddings.append(new_embedding)
