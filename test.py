@@ -21,6 +21,10 @@ if __name__ == '__main__':
             help='Use trained word embedding for SQLNet.')
     parser.add_argument('--BERT', type=bool, default=True,
             help='False: use GloVe "no context" embeddings, True: use BERT context embeddings')
+    parser.add_argument('--merged', type=str, default='avg',
+            help='max: use max-pooled bert embeddings, avg: use averaged bert embeddings, sum: use summed bert embeddings')
+    parser.add_argument('--types', type=bool, default=False,
+            help='False: use BERT context embeddings only, True: concatenate BERT with Type embeddings')
     parser.add_argument('--ensemble', type=bool, default=False,
             help='False: load single model, True: load ensemble')
     args = parser.parse_args()

@@ -17,11 +17,13 @@ if __name__ == '__main__':
     parser.add_argument('--suffix', type=str, default='',
             help='The suffix at the end of saved model name.')
     parser.add_argument('--sd_1', type=str, default='',
-            help='set model save directory.')
-    parser.add_argument('--sd_2',type=str, default='',
-            help='set save directory for second model if ensemble.')
+            help='set model save directory for single model.')
+    parser.add_argument('--sd_2', type=str, default='',
+            help='set save directory for second model, if ensemble computation.')
     parser.add_argument('--db_content', type=int, default=0,
             help='0: use knowledge graph type, 1: use db content to get type info')
+    parser.add_argument('--train_emb', action='store_true',
+            help='Train word embedding.')
     parser.add_argument('--BERT', type=bool, default=True,
             help='False: use GloVe "no context" embeddings, True: use BERT context embeddings')
     parser.add_argument('--merged', type=str, default='avg',
