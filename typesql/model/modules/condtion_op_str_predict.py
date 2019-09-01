@@ -182,8 +182,9 @@ class CondOpStrPredictor(nn.Module):
             scores = []
 
             t = 0
+            #TODO: maybe we should store BERT's [CLS] and [SEP] tokens somewhere?
             init_inp = np.zeros((B*4, 1, self.max_tok_num), dtype=np.float32)
-            init_inp[:,0,0] = 1  #Set the <BEG> token
+            init_inp[:,0,0] = 1  #Set the <BEG> token #TODO: for BERT rather [CLS] token?
             if self.gpu:
                 cur_inp = Variable(torch.from_numpy(init_inp).cuda())
             else:
