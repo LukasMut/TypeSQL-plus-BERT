@@ -16,8 +16,10 @@ if __name__ == '__main__':
             help='If set, use small data; used for fast debugging.')
     parser.add_argument('--suffix', type=str, default='',
             help='The suffix at the end of saved model name.')
-    parser.add_argument('--sd', type=str, default='',
+    parser.add_argument('--sd_1', type=str, default='',
             help='set model save directory.')
+    parser.add_argument('--sd_2',type=str, default='',
+            help='set save directory for second model if ensemble.')
     parser.add_argument('--db_content', type=int, default=0,
             help='0: use knowledge graph type, 1: use db content to get type info')
     parser.add_argument('--BERT', type=bool, default=True,
@@ -217,36 +219,55 @@ if __name__ == '__main__':
                 best_agg_acc = val_acc[1][0]
                 best_agg_idx = i+1
                 torch.save(model[0].agg_pred.state_dict(),
-                    args.sd + '/epoch%d.agg_model%s'%(i+1, args.suffix))
+                           args.sd_1 + '/epoch%d.agg_model%s'%(i+1, args.suffix))
                 torch.save(model[0].agg_pred.state_dict(), agg_m)
+                torch.save(model[0].agg_type_embed_layer.state_dict(),
+                           args.sd_1 + '/epoch%d.agg_embed%s'%(i+1, args.suffix))
+                torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e)
 
-            torch.save(model[0].agg_type_embed_layer.state_dict(),
-                                args.sd + '/epoch%d.agg_embed%s'%(i+1, args.suffix))
-            torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e)
-
+                if args.ensemble != 'single':
+                    torch.save(model[1].agg_pred.state_dict(),
+                                args.sd_2 + '/epoch%d.agg_model%s'%(i+1, args.suffix))
+                    torch.save(model[1].agg_type_embed_layer.state_dict(),
+                               args.sd_2 + '/epoch%d.agg_embed%s'%(i+1, args.suffix))                
+                
         if TRAIN_SEL:
             if val_acc[1][1] > best_sel_acc:
                 best_sel_acc = val_acc[1][1]
                 best_sel_idx = i+1
                 torch.save(model[0].selcond_pred.state_dict(),
-                    args.sd + '/epoch%d.sel_model%s'%(i+1, args.suffix))
+                           args.sd_1 + '/epoch%d.sel_model%s'%(i+1, args.suffix))
                 torch.save(model[0].selcond_pred.state_dict(), sel_m)
 
                 torch.save(model[0].sel_type_embed_layer.state_dict(),
-                                args.sd + '/epoch%d.sel_embed%s'%(i+1, args.suffix))
+                           args.sd_1 + '/epoch%d.sel_embed%s'%(i+1, args.suffix))
                 torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e)
-
+                
+                if args.ensemble != 'single':
+                    torch.save(model[1].selcond_pred.state_dict(),
+                               args.sd_2 + '/epoch%d.sel_model%s'%(i+1, args.suffix))
+                    torch.save(model[0].sel_type_embed_layer.state_dict(),
+                                args.sd_2 + '/epoch%d.sel_embed%s'%(i+1, args.suffix))
+                    
+    
         if TRAIN_COND:
             if val_acc[1][2] > best_cond_acc:
                 best_cond_acc = val_acc[1][2]
                 best_cond_idx = i+1
                 torch.save(model[0].op_str_pred.state_dict(),
-                    args.sd + '/epoch%d.cond_model%s'%(i+1, args.suffix))
+                           args.sd_1 + '/epoch%d.cond_model%s'%(i+1, args.suffix))
                 torch.save(model[0].op_str_pred.state_dict(), cond_m)
 
                 torch.save(model[0].cond_type_embed_layer.state_dict(),
-                                args.sd + '/epoch%d.cond_embed%s'%(i+1, args.suffix))
+                           args.sd_1 + '/epoch%d.cond_embed%s'%(i+1, args.suffix))
                 torch.save(model[0].cond_type_embed_layer.state_dict(), cond_e)
+                
+                if args.ensemble != 'single':
+                    torch.save(model[1].op_str_pred.state_dict(),
+                               args.sd_2 + '/epoch%d.cond_model%s'%(i+1, args.suffix))
+                    torch.save(model[1].cond_type_embed_layer.state_dict(),
+                                args.sd_2 + '/epoch%d.cond_embed%s'%(i+1, args.suffix))
+                    
 
         print(' Best val acc = %s, on epoch %s individually'%(
                 (best_agg_acc, best_sel_acc, best_cond_acc),

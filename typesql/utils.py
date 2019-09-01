@@ -62,20 +62,34 @@ def best_model_name(args, for_load=False):
         use_emb = ''
     else:
         use_emb = '_train_emb' if args.train_emb else ''
-
-    agg_model_name = args.sd + '/%s_%s%s.agg_model'%(new_data,
+    
+    agg_model_name_1 = args.sd_1 + '/%s_%s%s.agg_model'%(new_data,
             mode, use_emb)
-    sel_model_name = args.sd + '/%s_%s%s.sel_model'%(new_data,
+    sel_model_name_1 = args.sd_1 + '/%s_%s%s.sel_model'%(new_data,
             mode, use_emb)
-    cond_model_name = args.sd + '/%s_%s%s.cond_model'%(new_data,
+    cond_model_name_1 = args.sd_1 + '/%s_%s%s.cond_model'%(new_data,
             mode, use_emb)
 
-    agg_embed_name = args.sd + '/%s_%s%s.agg_embed'%(new_data, mode, use_emb)
-    sel_embed_name = args.sd + '/%s_%s%s.sel_embed'%(new_data, mode, use_emb)
-    cond_embed_name = args.sd + '/%s_%s%s.cond_embed'%(new_data, mode, use_emb)
-
-    return agg_model_name, sel_model_name, cond_model_name,\
-           agg_embed_name, sel_embed_name, cond_embed_name
+    agg_embed_name_1 = args.sd_1 + '/%s_%s%s.agg_embed'%(new_data, mode, use_emb)
+    sel_embed_name_1 = args.sd_1 + '/%s_%s%s.sel_embed'%(new_data, mode, use_emb)
+    cond_embed_name_1 = args.sd_1 + '/%s_%s%s.cond_embed'%(new_data, mode, use_emb)
+    
+    if args.ensemble != 'single':
+        agg_model_name_2 = args.sd_2 + '/%s_%s%s.agg_model'%(new_data,mode, use_emb)
+        sel_model_name_2 = args.sd_2 + '/%s_%s%s.sel_model'%(new_data,mode, use_emb)
+        cond_model_name_2 = args.sd_2 + '/%s_%s%s.cond_model'%(new_data,mode, use_emb)
+        agg_embed_name_2 = args.sd_2 + '/%s_%s%s.agg_embed'%(new_data, mode, use_emb)
+        sel_embed_name_2 = args.sd_2 + '/%s_%s%s.sel_embed'%(new_data, mode, use_emb)
+        cond_embed_name_2 = args.sd_2 + '/%s_%s%s.cond_embed'%(new_data, mode, use_emb)
+    
+    if args.ensemble == 'single':
+        return agg_model_name_1, sel_model_name_1, cond_model_name_1,\
+           agg_embed_name_1, sel_embed_name_1, cond_embed_name_1
+    else:
+        return agg_model_name_1, sel_model_name_1, cond_model_name_1,\
+           agg_embed_name_1, sel_embed_name_1, cond_embed_name_1, \
+        agg_model_name_2, sel_model_name_2, cond_model_name_2, \
+        agg_embed_name_2, sel_embed_name_2, cond_embed_name_2
 
 
 def to_batch_seq(sql_data, table_data, idxes, st, ed, db_content=0, ret_vis_data=False, BERT=False):
