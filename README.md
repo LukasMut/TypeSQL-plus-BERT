@@ -33,19 +33,19 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 
 1. To use knowledge graph types:
 ```
-  mkdir saved_model_kg_single (plus: mkdir savec_model_kg_second)
+  mkdir saved_model_kg_single (if ensemble, also: mkdir saved_model_kg_second)
   python train.py
-  --sd_1 saved_model_kg_single (set model save directory for single model)
-  --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
-  --BERT True (False, if you want to use GloVe)
-  --types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
-  --merged (use max-pooled, averaged or summed bert embeddings)
-  --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
+ --sd_1 saved_model_kg_single (set model save directory for single model)
+ --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
+ --BERT True (False, if you want to use GloVe)
+ --types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
+ --merged (use max-pooled, averaged or summed bert embeddings)
+ --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
 
 2. To use DB content types:
 ```
-   mkdir saved_model_con_single (plus: mkdir saved_model_con_second)
+   mkdir saved_model_con_single (if ensemble, also: mkdir saved_model_con_second)
    python train.py
   --sd_1 saved_model_con_single (set model save directory for single model)
   --sd_2 saved_model_con_second (set save directory for second model, if ensemble computation)
