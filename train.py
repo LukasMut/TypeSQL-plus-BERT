@@ -3,6 +3,8 @@ import torch
 import datetime
 import argparse
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 from typesql.utils import *
 from typesql.model.sqlnet import SQLNet
 from typesql.lib.dbengine import DBEngine
@@ -87,9 +89,9 @@ if __name__ == '__main__':
     
     if args.ensemble:
         model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
+                      word_emb_bert=None, BERT=False, types=args.types)
         model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                      word_emb_bert=bert_tuple, BERT=args.BERT, types=False) #args.types)
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
         
         #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
         optimizer_1 = torch.optim.Adam(model_1.parameters(), lr=learning_rate, weight_decay = 0)
@@ -153,16 +155,23 @@ if __name__ == '__main__':
         else:
             torch.save(model[0].op_str_pred.state_dict(), cond_m)
             torch.save(model[0].cond_type_embed_layer.state_dict(), cond_e)
-
+            
+    losses = list()
+    train_accs = list()
+    val_accs = list()
     for i in range(100):
         print('Epoch %d @ %s'%(i+1, datetime.datetime.now()))
-        print(' Loss = %s'%epoch_train(
+        loss = epoch_train(
                 model, optimizer, BATCH_SIZE,
-                sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT))
-        print(' Train acc_qm: %s\n breakdown result: %s'%epoch_acc(
-                model, BATCH_SIZE, sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT))
+                sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT)
+        losses.append(loss)
+        print(' Loss = %s'%loss)
+        train_acc = epoch_acc(model, BATCH_SIZE, sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT)
+        train_accs.append(train_acc[0])
+        print(' Train acc_qm: %s\n breakdown result: %s'% train_acc)
 
         val_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, False, BERT=args.BERT) #for detailed error analysis, pass True to the end (second last argument before BERT)
+        val_accs.append(val_acc[0])
         print(' Dev acc_qm: %s\n breakdown result: %s'%val_acc)
         
         if TRAIN_AGG:
@@ -204,3 +213,34 @@ if __name__ == '__main__':
         print(' Best val acc = %s, on epoch %s individually'%(
                 (best_agg_acc, best_sel_acc, best_cond_acc),
                 (best_agg_idx, best_sel_idx, best_cond_idx)))
+   
+
+    plt.clf() # clear current figure, but leave window opened, such that it may be reused for other plots
+    plt.plot(range(100), train_accs, color='blue')
+    max_train = np.argmax(train_accs)
+    label = "Train: {:.2f}%".format(train_accs[max_train]*100) # value of acc, with 2 decimal places
+    plt.annotate(label, # text
+                 (max_train+1, train_accs[max_train]), # point to label
+                 textcoords="offset points", # how to position the text
+                 xytext=(0,5), # distance from text to points (x,y)
+                 ha='center')
+    plt.plot(val_accs, color='orange')
+    max_val = np.argmax(val_accs)
+    label = "Dev: {:.2f}%".format(val_accs[max_val]*100) # value of acc, with 2 decimal places
+    plt.annotate(label, # text
+                 (max_val+1, val_accs[max_val]), # point to label
+                 textcoords="offset points", # how to position the text
+                 xytext=(0,20), # distance from text to points (x,y)
+                 ha='center')
+    plt.title('TypeSQL learning curves')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['training', 'validation'], loc='lower right')
+    plt.show()
+    
+    plt.plot(range(100), losses, color='blue')
+    plt.title("TypeSQL's learning curve during training")
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend('loss', loc='upper right')
+    plt.show()
