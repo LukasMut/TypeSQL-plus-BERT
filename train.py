@@ -274,22 +274,22 @@ if __name__ == '__main__':
                 (best_agg_idx, best_sel_idx, best_cond_idx)))
    
 
-    plt.clf() # clear current figure, but leave window opened, such that it may be reused for other plots
+    plt.clf() # clear current figure, but leave window opened
     plt.plot(range(100), train_accs, color='blue')
     max_train = np.argmax(train_accs)
-    label = "Train: {:.2f}%".format(train_accs[max_train]*100) # value of acc, with 2 decimal places
+    label = "Train: {:.2f}%, Epoch: {}".format(train_accs[max_train]*100, max_train)
     plt.annotate(label, # text
-                 (max_train+1, train_accs[max_train]), # point to label
-                 textcoords="offset points", # how to position the text
-                 xytext=(0,5), # distance from text to points (x,y)
+                 (max_train+1, train_accs[max_train]),
+                 textcoords="offset points",
+                 xytext=(0,15),
                  ha='center')
     plt.plot(val_accs, color='orange')
     max_val = np.argmax(val_accs)
-    label = "Dev: {:.2f}%".format(val_accs[max_val]*100) # value of acc, with 2 decimal places
-    plt.annotate(label, # text
-                 (max_val+1, val_accs[max_val]), # point to label
-                 textcoords="offset points", # how to position the text
-                 xytext=(0,20), # distance from text to points (x,y)
+    label = "Dev: {:.2f}%, Epoch: {}".format(val_accs[max_val]*100, max_val)
+    plt.annotate(label,
+                 (max_val+1, val_accs[max_val]),
+                 textcoords="offset points",
+                 xytext=(0,5),
                  ha='center')
     plt.title('TypeSQL learning curves')
     plt.ylabel('Accuracy')
@@ -301,5 +301,4 @@ if __name__ == '__main__':
     plt.title("TypeSQL's learning curve during training")
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
-    plt.legend('loss', loc='upper right')
     plt.show()
