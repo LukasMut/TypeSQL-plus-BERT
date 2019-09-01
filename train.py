@@ -5,10 +5,11 @@ import argparse
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+
 from typesql.utils import *
 from typesql.model.sqlnet import SQLNet
 from typesql.lib.dbengine import DBEngine
-from bert_utils import update_sql_data, remove_nonequal_questions, load_bert_dicts
+from bert_utils import update_sql_data, remove_nonequal_questions, load_bert_dicts, plot_accs, plot_losses
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -277,30 +278,5 @@ if __name__ == '__main__':
    
 
     plt.clf() # clear current figure, but leave window opened
-    plt.plot(range(100), train_accs, color='blue')
-    max_train = np.argmax(train_accs)
-    label = "Train: {:.2f}%, Epoch: {}".format(train_accs[max_train]*100, max_train)
-    plt.annotate(label, # text
-                 (max_train+1, train_accs[max_train]),
-                 textcoords="offset points",
-                 xytext=(0,15),
-                 ha='center')
-    plt.plot(val_accs, color='orange')
-    max_val = np.argmax(val_accs)
-    label = "Dev: {:.2f}%, Epoch: {}".format(val_accs[max_val]*100, max_val)
-    plt.annotate(label,
-                 (max_val+1, val_accs[max_val]),
-                 textcoords="offset points",
-                 xytext=(0,5),
-                 ha='center')
-    plt.title('TypeSQL learning curves')
-    plt.ylabel('Accuracy')
-    plt.xlabel('Epoch')
-    plt.legend(['training', 'validation'], loc='lower right')
-    plt.show()
-    
-    plt.plot(range(100), losses, color='blue')
-    plt.title("TypeSQL's learning curve during training")
-    plt.ylabel('Loss')
-    plt.xlabel('Epoch')
-    plt.show()
+    plot_accs(list(range(1,101)), train_accs, val_accs)
+    plot_losses(losses)

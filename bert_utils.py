@@ -6,6 +6,7 @@ import json
 import re
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 
 from pytorch_transformers import *
 from typesql.utils import *
@@ -400,3 +401,33 @@ def load_bert_dicts(file_tok, file_emb):
     id2embed = {int(idx):np.array(embedding) for idx, embedding in id2embed.items()}
     assert len(id2tok) == len(id2embed)
     return id2tok, id2embed
+
+def plot_accs(n_epochs, train_accs, val_accs):
+    plt.plot(n_epochs, train_accs, color='blue')
+    max_train = np.argmax(train_accs)
+    label = "Train: {:.2f}%, Epoch: {}".format(train_accs[max_train]*100, n_epochs[max_train])
+    plt.annotate(label, # text
+                 (max_train+1, train_accs[max_train]),
+                 textcoords="offset points",
+                 xytext=(0,15),
+                 ha='center')
+    plt.plot(val_accs, color='orange')
+    max_val = np.argmax(val_accs)
+    label = "Dev: {:.2f}%, Epoch: {}".format(val_accs[max_val]*100, n_epochs[max_val])
+    plt.annotate(label,
+                 (max_val+1, val_accs[max_val]),
+                 textcoords="offset points",
+                 xytext=(0,5),
+                 ha='center')
+    plt.title('TypeSQL learning curves')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['training', 'validation'], loc='lower right')
+    plt.show()
+
+def plot_losses(n_epochs, losses):
+    plt.plot(n_epochs, losses, color='blue')
+    plt.title("TypeSQL's learning curve during training")
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.show()
