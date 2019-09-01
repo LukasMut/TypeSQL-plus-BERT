@@ -183,7 +183,10 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         if self.trainable_emb:
                          
             if pred_agg:
-                x_emb_var, x_len = self.agg_embed_layer.gen_x_batch(q_ids, col, BERT=False)
+                if self.BERT:
+                    x_emb_var, x_len = self.agg_embed_layer.gen_x_batch(q_toks, col, BERT=False)
+                else:
+                    x_emb_var, x_len = self.agg_embed_layer.gen_x_batch(q, col, BERT=False)
                 col_inp_var, col_name_len, col_len = \
                         self.agg_embed_layer.gen_col_batch(col)
                 max_x_len = max(x_len)
@@ -191,7 +194,10 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                         col_name_len, col_len, col_num, gt_sel=gt_sel)
 
             if pred_sel:
-                x_emb_var, x_len = self.sel_embed_layer.gen_x_batch(q_ids, col, BERT=self.BERT)
+                if self.BERT:
+                    x_emb_var, x_len = self.sel_embed_layer.gen_x_batch(q_ids, col, BERT=self.BERT)
+                else:
+                    x_emb_var, x_len = self.sel_embed_layer.gen_x_batch(q, col, BERT=self.BERT)
                 col_inp_var, col_name_len, col_len = \
                         self.sel_embed_layer.gen_col_batch(col)
                 max_x_len = max(x_len)
@@ -199,7 +205,10 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                         col_name_len, col_len, col_num)
 
             if pred_cond:
-                x_emb_var, x_len = self.cond_embed_layer.gen_x_batch(q_ids, col, BERT=self.BERT)
+                if self.BERT:
+                    x_emb_var, x_len = self.cond_embed_layer.gen_x_batch(q_ids, col, BERT=self.BERT)
+                else:
+                    x_emb_var, x_len = self.cond_embed_layer.gen_x_batch(q, col, BERT=self.BERT)             
                 col_inp_var, col_name_len, col_len = \
                         self.cond_embed_layer.gen_col_batch(col)
                 max_x_len = max(x_len)
@@ -208,8 +217,11 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                         gt_where, gt_cond)
                 
         elif self.db_content == 0:
-            # use BERT embeddings to represent questions
-            x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
+            if self.BERT:
+                # use BERT embeddings to represent questions
+                x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
+            else:
+                x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=self.BERT)
 
             # don't use BERT embeddings to predict aggregate value in SELECT clause
             x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
@@ -233,8 +245,11 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                 cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_cond_emb_var, gt_where, gt_cond, sel_cond_score)
 
         else:
+            if self.BERT:
             # use BERT embeddings to represent questions
-            x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
+                x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
+            else:
+                x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=self.BERT)
             
             # don't use BERT embeddings to predict aggregate value in SELECT clause
             x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
