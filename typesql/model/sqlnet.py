@@ -220,17 +220,18 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             if self.BERT:
                 # use BERT embeddings to represent questions
                 x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
+                # don't use BERT embeddings to predict aggregate value in SELECT clause
+                x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
+                # don't use BERT context embeddings to predict aggregate value in SELECT clause 
+                agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
             else:
                 x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=self.BERT)
-
-            # don't use BERT embeddings to predict aggregate value in SELECT clause
-            x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
+                x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=False)
+                # don't use BERT context embeddings to predict aggregate value in SELECT clause 
+                agg_emb_var = self.embed_layer.gen_agg_batch(q)
             
             # don't use BERT context embeddings to represent columns (!)
             col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
-            
-            # don't use BERT context embeddings to predict aggregate value in SELECT clause 
-            agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
             
             max_x_len = max(x_len)
             if pred_agg:
@@ -248,12 +249,17 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             if self.BERT:
             # use BERT embeddings to represent questions
                 x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
+                # don't use BERT embeddings to predict aggregate value in SELECT clause
+                x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
+                # don't use BERT context embeddings to predict aggregate value in SELECT clause (!)
+                agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
             else:
                 x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=self.BERT)
-            
-            # don't use BERT embeddings to predict aggregate value in SELECT clause
-            x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
-            
+                # don't use BERT embeddings to predict aggregate value in SELECT clause
+                x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=False)
+                # don't use BERT context embeddings to predict aggregate value in SELECT clause (!)
+                agg_emb_var = self.embed_layer.gen_agg_batch(q)
+                
             # don't use BERT context embeddings to represent columns (!)            
             col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
             
@@ -261,10 +267,6 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             x_type_emb_var, x_type_len = self.embed_layer.gen_x_batch(q_type, col, is_list=True, is_q=True, BERT=False)
             
             col_type_inp_var, col_type_len = self.embed_layer.gen_x_batch(col_type, col_type, is_list=True, BERT=False) 
-            
-            # don't use BERT context embeddings to predict aggregate value in SELECT clause (!)
-            agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
-            
             max_x_len = max(x_len)
             
             if pred_agg:
