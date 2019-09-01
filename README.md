@@ -33,57 +33,29 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 
 1. To use knowledge graph types:
 ```
-  mkdir saved_model_kg
-  python train.py --sd saved_model_kg
+  mkdir saved_model_kg_single (plus: mkdir savec_model_kg_second)
+  python train.py
+  --sd_1 saved_model_kg_single (set model save directory for single model)
+  --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
+  --BERT True (False, if you want to use GloVe)
+  --types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
+  --merged (use max-pooled, averaged or summed bert embeddings)
+  --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
-
-  1.1 To use BERT embeddings:
-
-  ```
-    mkdir saved_model_kg
-    python train.py --sd saved_model_kg --BERT True
-  ```
-
-  1.2 To concatenate BERT with Type embeddings:
-
-  ```
-    mkdir saved_model_kg
-    python train.py --sd saved_model_kg --BERT True --types True (False, if you want to use BERT embeddings only - no concatenation)
-  ```
-  
-  1.3 To concatenate BERT with Type embeddings and use an ensemble (instead of a single network):
-  
- ```
-    mkdir saved_model_kg
-    python train.py --sd saved_model_kg --BERT True --types True --ensemble True
- ``` 
 
 2. To use DB content types:
 ```
-   mkdir saved_model_con
-   python train.py --sd saved_model_con --db_content 1
+   mkdir saved_model_con_single (plus: mkdir saved_model_con_second)
+   python train.py
+  --sd_1 saved_model_con_single (set model save directory for single model)
+  --sd_2 saved_model_con_second (set save directory for second model, if ensemble computation)
+  --db_content 1
+  --BERT True (False, if you want to use GloVe)
+  --types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
+  --merged (use max-pooled, averaged or summed bert embeddings)
+  --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
-
-  2.1 To use BERT embeddings:
-
-  ```
-    mkdir saved_model_con
-    python train.py --sd saved_model_con --db_content 1 --BERT True
-  ```
-
-  2.2 To concatenate BERT with Type embeddings:
-
-  ```
-    mkdir saved_model_con
-    python train.py --sd saved_model_con --db_content 1 --BERT True --types True (False, if you want to use BERT embeddings only - no concatenation)
-  ```
-  
-  2.3 To concatenate BERT with Type embeddings and use an ensemble network (instead of a single model):
-  
-   ```
-    mkdir saved_model_con
-    python train.py --sd saved_model_con --db_content 1 --BERT True --types True --ensemble True
-   ``` 
+ 
   
 #### Test Models
 
