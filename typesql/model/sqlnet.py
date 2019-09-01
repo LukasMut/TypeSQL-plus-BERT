@@ -494,22 +494,23 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             agg_score_1, sel_cond_score_1, cond_op_str_score_1 = score[0]
             agg_score_2, sel_cond_score_2, cond_op_str_score_2 = score[1]
             
-            # soft voting ensemble computation (averaging over the output(s) (scores) of the different models)
+            # soft voting ensemble computation (weighted averaging over the output(s) (scores) of the different models)
             agg_score = torch.mean(torch.stack([agg_score_1, agg_score_2]),dim=0)
             
             cond_num_score_1, sel_score_1, cond_col_score_1 = [x.data.cpu().numpy() for x in sel_cond_score_1]
             cond_num_score_2, sel_score_2, cond_col_score_2 = [x.data.cpu().numpy() for x in sel_cond_score_2]
-            cond_num_score =  np.mean((cond_num_score_1, cond_num_score_2),axis=0)
-            sel_score = np.mean((sel_score_1, sel_score_2),axis=0)
-            cond_col_score = np.mean((cond_col_score_1, cond_col_score_2),axis=0)
+            
+            cond_num_score =  np.average((cond_num_score_1, cond_num_score_2),axis=0, weights=[2./3, 1./3]) #np.mean((cond_num_score_1, cond_num_score_2),axis=0)
+            sel_score = np.average((sel_score_1, sel_score_2),axis=0, weights=[2./3, 1./3]) #np.mean((sel_score_1, sel_score_2),axis=0)
+            cond_col_score = np.average((cond_col_score_1, cond_col_score_2),axis=0, weights=[2./3, 1./3])#np.mean((cond_col_score_1, cond_col_score_2),axis=0)
 
             cond_op_score_1, cond_str_score_1 = [x.data.cpu().numpy() for x in cond_op_str_score_1]
             cond_op_score_2, cond_str_score_2 = [x.data.cpu().numpy() for x in cond_op_str_score_2]
             
             #TODO: understand how the tensors "cond_op_score" and "cond_str_score" are represented;
             #      maybe you have to average differently?
-            cond_op_score = np.mean((cond_op_score_1, cond_op_score_2),axis=0)
-            cond_str_score = np.mean((cond_str_score_1, cond_str_score_2),axis=0)
+            cond_op_score = np.average((cond_op_score_1, cond_op_score_2),axis=0, weights=[2./3, 1./3]) #np.mean((cond_op_score_1, cond_op_score_2),axis=0)
+            cond_str_score = np.average((cond_str_score_1, cond_str_score_2),axis=0, weights=[2./3, 1./3]) #np.mean((cond_str_score_1, cond_str_score_2),axis=0)
             
         else:
             agg_score, sel_cond_score, cond_op_str_score = score[0]
