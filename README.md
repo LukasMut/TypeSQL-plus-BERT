@@ -68,6 +68,7 @@ python test.py
 --sd_1 saved_model_kg_single (set model save directory for single model)
 --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
 --BERT True (False, if you want to use GloVe)
+--types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
 --merged (use max-pooled, averaged or summed BERT embeddings)
 --ensemble True (False, if you want to load single model)
 ```
@@ -79,6 +80,7 @@ python test.py
 --sd_2 saved_model_con_second (load second model, if ensemble computation)
 --db_content 1
 --BERT True (False, if you want to use GloVe)
+--types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
 --merged (use max-pooled, averaged or summed BERT embeddings)
 --ensemble (False, if you want to load single model)
 ```
