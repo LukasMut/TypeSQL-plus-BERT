@@ -3,9 +3,10 @@ import torch
 import datetime
 import argparse
 import numpy as np
+
 from typesql.utils import *
 from typesql.model.sqlnet import SQLNet
-#from BERT_context_embeddings import update_sql_data, load_bert_dicts
+from bert_utils import update_sql_data, remove_nonequal_questions, load_bert_dicts
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
