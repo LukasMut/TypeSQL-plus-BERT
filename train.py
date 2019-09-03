@@ -138,11 +138,12 @@ if __name__ == '__main__':
         print()
         
     elif args.ensemble == 'single':
-        model = [SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)]
+        model = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
        
         #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay = 0)
+        model = [model]
         print("Single model was initialized...")
     
     else:
