@@ -404,13 +404,24 @@ def bert_pipeline(sql_data_train, sql_data_val, merge='avg'):
     id2embed = reduce_dims(id2embed)
     return id2tok, id2embed
 
-def save_embeddings_as_json(id2tok, id2embed):
+def save_embeddings_as_json(id2tok, id2embed, merge):
     # np.arrays have to be converted into lists to be .json serializable
     id2embed = {int(idx):embedding.tolist() for idx, embedding in id2embed.items()}
     id2tok = {int(idx):tok for idx, tok in id2tok.items()}
-    with open('id2embed.json', 'w') as json_file:
+    if merge == 'max':
+        embeddings = 'id2embedMax.json'
+        ids = 'id2tokMax.json'
+    elif merge == 'avg':
+        embeddings = 'id2embedMean.json'
+        ids = 'id2tokMean.json'
+    elif merge == 'sum':
+        embeddings = 'id2embedSum.json'
+        ids = 'id2tokSum.json' 
+    else:
+        raise Exception('Embeddings have to be summed, averaged or max-pooled')
+    with open(embeddings, 'w') as json_file:
         json.dump(id2embed, json_file)
-    with open('id2tok.json', 'w') as json_file:
+    with open(ids, 'w') as json_file:
         json.dump(id2tok, json_file)
         
 def load_bert_dicts(file_tok, file_emb):
