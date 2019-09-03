@@ -8,6 +8,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
+from sklearn.decomposition import PCA
 from pytorch_transformers import *
 from typesql.utils import *
 from retokenizer import Retokenizer
@@ -18,8 +19,8 @@ def concatenate_sql_data(sql_data_train, sql_data_val):
 
 def count_context_toks(tok = 'the'):
     """
-        Input: arbitrary token
-        Output: number of times the token was used in different contexts
+        Args: arbitrary token
+        Return: number of times the token was used in different contexts
     """
     unique_toks = set()
     for sent_id in sent_idxs:
@@ -36,13 +37,13 @@ def extract_questions(sql_data, tokenize = True):
 
 def bert_preprocessing(questions, tok2ids_tuple = False, flatten = False):
     """
-        Input: Raw natural language questions represented as strings. 
+        Args: Raw natural language questions represented as strings. 
         Computation: Sentence preprocessing steps necessary for BERT model.
                     Each sentence is required to be preceded by a special [CLS] token
                     and followed by a special [SEP] token.
                     Token IDs arrays have to be converted into tensors 
                     before they can be passed to BERT. 
-        Output: tokenized questions, token IDs, segment IDs (i.e., ones),
+        Return: tokenized questions, token IDs, segment IDs (i.e., ones),
                 tuples of (tokens, ids) either per token-id-pair or as a list per sentence.
     """
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -225,11 +226,11 @@ def merge_token_ids_embed(bert_toks, bert_ids, arbitrary_id, merge, bert_embeddi
 ## FOR NOW: just use token representations of last hidden layer (implemented in cell below)
 def get_summed_embeddings(model, toks_ids, segment_ids):
     """
-        Input: BertModel, token id tensors, segment id tensors
+        Args: BertModel, token id tensors, segment id tensors
         Computation: Convert the hidden state embeddings into single token vectors
                      Holds the list of 12 layer embeddings for each token
                      Will have the shape: [# tokens, # layers, # features]
-        Output: Bert context embedding for each token in the question.
+        Return: Bert context embedding for each token in the question.
                 Final token embedding is the sum over the last four hidden layer representions.
     """
     # encoded_layers = model(toks_ids, segment_ids)[0]
@@ -257,15 +258,15 @@ def bert_token_ids(tok_questions, tok_ids, sql_data, arbitrary_id = 99999):
         rejoined_ids.append(new_ids)
     return rejoined_toks, rejoined_ids
 
-def bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, dim = 100, arbitrary_id = 99999,
-                    merge = 'avg', matrix = False, tensor = False):
+def bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, merge, arbitrary_id = 99999,
+                    matrix = False, tensor = False):
     """
-        Input: torch tensors of token ids and segment ids.
+        Args: torch tensors of token ids and segment ids.
         Computation: load pre-trained BERT model (weights),
                      put the model in "evaluation" mode, meaning feed-forward operation.
                      "torch.no_grad()" deactivates the gradient calculations, 
                      saves memory, and speeds up computation (we don't need gradients or backprop).
-        Output: dictionary that maps token ids (keys) 
+        Return: dictionary that maps token ids (keys) 
                 to their corresponding BERT context embeddings (values).
     """
     #TODO: check what's necessary to ouput all hidden states
@@ -308,7 +309,7 @@ def bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, dim = 100, ar
                 for tok_id, bert_tok, bert_embedding in zip(new_ids, new_toks, new_embeddings):
                     #tok_i = tok_i.item()
                     if tok_id not in id2embed:
-                        id2embed[tok_id] = bert_embedding[:dim]
+                        id2embed[tok_id] = bert_embedding
                     if tok_id not in id2tok:
                         id2tok[tok_id] = bert_tok
             except AssertionError:
@@ -333,8 +334,8 @@ def drop_data(tok_questions, tok_ids, sql_data, idx_to_drop):
 
 def update_sql_data(sql_data):
     """
-        Input: SQL dataset
-        Output: Updated SQL dataset with bert tokens and corresponding bert ids
+        Args: SQL dataset
+        Return: Updated SQL dataset with bert tokens and corresponding bert ids
                 BERT tokens were rejoined into TypeSQL's gold standard tokens and
                 hence are the same
     """
@@ -376,11 +377,31 @@ def remove_nonequal_questions(sql_data):
     print()
     return sql_data
 
-def bert_pipeline(sql_data_train, sql_data_val):
+def reduce_dims(id2embed, dims_to_keep=100):
+    """
+    Dimensionality reduction of BERT embeddings performed through PCA.
+        Args: id2embedding dict; number of dimensions to keep (of original 768 BERT embeddings)
+        Return: id2embdding dict with reduced dimensionality embeddings specified by dims-to-keep 
+    """
+    ids = []
+    embeddings = np.zeros((len(id2embed), 768))
+    id2embed = dict(sorted(id2embed.items(), key=lambda kv:kv[0], reverse=False))
+    for i, (idx, embedding) in enumerate(id2embed.items()):
+        ids.append(idx)
+        embeddings[i] = embedding
+        
+    pca = PCA(n_components=dims_to_keep, svd_solver='auto', random_state=42)
+    embeddings = pca.fit_transform(embeddings)
+    
+    id2embed_reduced = {idx:embedding for idx, embedding in zip(ids, embeddings)}
+    return id2embed_reduced
+
+def bert_pipeline(sql_data_train, sql_data_val, merge='avg'):
     sql_data = concatenate_sql_data(sql_data_train, sql_data_val)
     tok_questions, tok_ids, segment_ids, _ = bert_preprocessing(extract_questions(sql_data))
-    _, _, id2embed, id2tok = bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data)
+    _, _, id2embed, id2tok = bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, merge)
     assert len(id2embed) == len(id2tok)
+    id2embed = reduce_dims(id2embed)
     return id2tok, id2embed
 
 def save_embeddings_as_json(id2tok, id2embed):
