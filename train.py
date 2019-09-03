@@ -144,7 +144,9 @@ if __name__ == '__main__':
         #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay = 0)
         model = [model]
+        print()
         print("Single model was initialized...")
+        print()
     
     else:
         raise Exception('Model must be single, mixed ensemble or homogeneous ensemble')
