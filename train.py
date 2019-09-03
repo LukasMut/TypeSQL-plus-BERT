@@ -33,9 +33,6 @@ if __name__ == '__main__':
             help='False: use BERT context embeddings only, True: concatenate BERT with Type embeddings')
     parser.add_argument('--ensemble', type=str, default='single',
             help='single: single model, mixed: mixed ensemble (GloVe and BERT), homogeneous: homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT))')
-    parser.add_argument('--train_emb', action='store_true',
-            help='Train word embedding.')
-
     args = parser.parse_args()
 
     #N_word=600
