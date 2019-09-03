@@ -173,7 +173,7 @@ if __name__ == '__main__':
     print('Init dev acc_qm: %s\n  breakdown on (agg, sel, where): %s' % init_acc)
         
     if TRAIN_AGG:
-        if args.ensemble != 'single:
+        if args.ensemble != 'single':
             for net in model:
                 torch.save(net.agg_pred.state_dict(), agg_m)
                 torch.save(net.agg_type_embed_layer.state_dict(), agg_e)
@@ -181,7 +181,7 @@ if __name__ == '__main__':
             torch.save(model[0].agg_pred.state_dict(), agg_m)
             torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e)
     if TRAIN_SEL:
-        if args.ensemble != 'single:
+        if args.ensemble != 'single':
             for net in model:
                 torch.save(net.selcond_pred.state_dict(), sel_m)
                 torch.save(net.sel_type_embed_layer.state_dict(), sel_e)         
@@ -189,7 +189,7 @@ if __name__ == '__main__':
             torch.save(model[0].selcond_pred.state_dict(), sel_m)
             torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e)
     if TRAIN_COND:
-        if args.ensemble != 'single:
+        if args.ensemble != 'single':
             for net in model:
                 torch.save(net.op_str_pred.state_dict(), cond_m)
                 torch.save(net.cond_type_embed_layer.state_dict(), cond_e)    
