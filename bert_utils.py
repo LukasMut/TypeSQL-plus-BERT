@@ -377,7 +377,7 @@ def remove_nonequal_questions(sql_data):
     print()
     return sql_data
 
-def reduce_dims(id2embed, dims_to_keep=100):
+def reduce_dimensionality(id2embed, dims_to_keep=100):
     """
     Dimensionality reduction of BERT embeddings performed through PCA.
         Args: id2embedding dict; number of dimensions to keep (of original 768 BERT embeddings)
@@ -404,21 +404,30 @@ def bert_pipeline(sql_data_train, sql_data_val, merge='avg'):
     id2embed = reduce_dims(id2embed)
     return id2tok, id2embed
 
-def save_embeddings_as_json(id2tok, id2embed, merge):
+def save_embeddings_as_json(id2tok, id2embed, merge, full=False):
     # np.arrays have to be converted into lists to be .json serializable
     id2embed = {int(idx):embedding.tolist() for idx, embedding in id2embed.items()}
     id2tok = {int(idx):tok for idx, tok in id2tok.items()}
     if merge == 'max':
-        embeddings = 'id2embedMax.json'
+        if full:
+            embeddings = 'id2embedMaxFull.json'
+        else:
+            embeddings = 'id2embedMax100.json'
         ids = 'id2tokMax.json'
     elif merge == 'avg':
-        embeddings = 'id2embedMean.json'
+        if full:
+            embeddings = 'id2embedMeanFull.json'
+        else:
+            embeddings = 'id2embedMean100.json'
         ids = 'id2tokMean.json'
     elif merge == 'sum':
-        embeddings = 'id2embedSum.json'
+        if full:
+            embeddings = 'id2embedSumFull.json'
+        else:
+            embeddings = 'id2embedSum100.json'
         ids = 'id2tokSum.json' 
     else:
-        raise Exception('Embeddings have to be summed, averaged or max-pooled')
+        raise Exception('Embeddings have to be max-pooled, averaged or summed')
     with open(embeddings, 'w') as json_file:
         json.dump(id2embed, json_file)
     with open(ids, 'w') as json_file:
@@ -437,7 +446,7 @@ def load_bert_dicts(file_tok, file_emb):
 def plot_accs(n_epochs, train_accs, val_accs):
     plt.plot(n_epochs, train_accs, color='blue')
     max_train = np.argmax(train_accs)
-    label = "Train: {:.2f}%, Epoch: {}".format(train_accs[max_train]*100, n_epochs[max_train])
+    label = "Train: {:.2f}%, E: {}".format(train_accs[max_train]*100, n_epochs[max_train])
     plt.annotate(label, # text
                  (max_train+1, train_accs[max_train]),
                  textcoords="offset points",
@@ -445,7 +454,7 @@ def plot_accs(n_epochs, train_accs, val_accs):
                  ha='center')
     plt.plot(val_accs, color='orange')
     max_val = np.argmax(val_accs)
-    label = "Dev: {:.2f}%, Epoch: {}".format(val_accs[max_val]*100, n_epochs[max_val])
+    label = "Dev: {:.2f}%, E: {}".format(val_accs[max_val]*100, n_epochs[max_val])
     plt.annotate(label,
                  (max_val+1, val_accs[max_val]),
                  textcoords="offset points",

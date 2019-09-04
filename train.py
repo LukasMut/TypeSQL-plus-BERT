@@ -279,4 +279,4 @@ if __name__ == '__main__':
 
     plt.clf() # clear current figure, but leave window opened
     plot_accs(list(range(1,101)), train_accs, val_accs)
-    plot_losses(losses)
+    plot_losses(list(range(1,101)), losses)
