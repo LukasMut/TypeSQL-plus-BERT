@@ -159,3 +159,8 @@ typesql/model/modules/__pycache__/sel_condition_predict.cpython-37.pyc
 typesql/model/modules/__pycache__/word_embedding.cpython-37.pyc
 .ipynb_checkpoints/bert_embeddings-checkpoint.ipynb
 __pycache__/bert_utils.cpython-37.pyc
+bert/id2embedMax100.json
+bert/id2embedMaxFull.json
+bert/id2embedMean100.json
+.ipynb_checkpoints/bert_embeddings-checkpoint.ipynb
+.ipynb_checkpoints/bert_embeddings-checkpoint.ipynb

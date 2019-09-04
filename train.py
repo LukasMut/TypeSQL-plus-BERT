@@ -68,11 +68,11 @@ if __name__ == '__main__':
         print()
         print("Loading bert embeddings...")
         if args.merged == 'max':
-            id2tok, word_emb_bert = load_bert_dicts("./id2tokMax.json", "./id2embedMax.json")
+            id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMax.json", "./bert/id2embedMax100.json")
         elif args.merged == 'avg':
-            id2tok, word_emb_bert = load_bert_dicts("./id2tokMean.json", "./id2embedMean.json")
+            id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMean.json", "./bert/id2embedMean100.json")
         elif args.merged == 'sum':
-            id2tok, word_emb_bert = load_bert_dicts("./id2tokSum.json", "./id2embedSum.json")
+            id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokSum.json", "./bert/id2embedSum.json")
         else:
             raise Exception('Only max-pooled, averaged or summed bert embeddings can be loaded into memory')
         print("Bert embeddings have been loaded into memory")
