@@ -153,7 +153,11 @@ if __name__ == '__main__':
         
     assert isinstance(model, list), 'models have to be stored in list'
     
-    agg_m1, sel_m1, cond_m1, agg_e1, sel_e1, cond_e1, agg_m2, sel_m2, cond_m2, agg_e2, sel_e2, cond_e2 = best_model_name(args)
+    if args.ensemble == 'single':
+        agg_m1, sel_m1, cond_m1, agg_e1, sel_e1, cond_e1 = best_model_name(args)
+    else:
+        agg_m1, sel_m1, cond_m1, agg_e1, sel_e1, cond_e1, agg_m2, sel_m2, cond_m2, agg_e2, sel_e2, cond_e2 = best_model_name(args)
+        
 
     if args.train_emb: # Load pretrained model.
         agg_lm, sel_lm, cond_lm = best_model_name(args, for_load=True)
@@ -186,8 +190,8 @@ if __name__ == '__main__':
                 torch.save(net.agg_pred.state_dict(), agg_m)
                 torch.save(net.agg_type_embed_layer.state_dict(), agg_e)
         else:
-            torch.save(model[0].agg_pred.state_dict(), agg_m)
-            torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e)
+            torch.save(model[0].agg_pred.state_dict(), agg_m1)
+            torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e1)
     if TRAIN_SEL:
         if args.ensemble != 'single':
             for i, net in enumerate(model):
@@ -200,8 +204,8 @@ if __name__ == '__main__':
                 torch.save(net.selcond_pred.state_dict(), sel_m)
                 torch.save(net.sel_type_embed_layer.state_dict(), sel_e)         
         else:
-            torch.save(model[0].selcond_pred.state_dict(), sel_m)
-            torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e)
+            torch.save(model[0].selcond_pred.state_dict(), sel_m1)
+            torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e1)
     if TRAIN_COND:
         if args.ensemble != 'single':
             for i, net in enumerate(model):
@@ -214,8 +218,8 @@ if __name__ == '__main__':
                 torch.save(net.op_str_pred.state_dict(), cond_m)
                 torch.save(net.cond_type_embed_layer.state_dict(), cond_e)    
         else:
-            torch.save(model[0].op_str_pred.state_dict(), cond_m)
-            torch.save(model[0].cond_type_embed_layer.state_dict(), cond_e)
+            torch.save(model[0].op_str_pred.state_dict(), cond_m1)
+            torch.save(model[0].cond_type_embed_layer.state_dict(), cond_e1)
             
     losses = list()
     train_accs = list()
