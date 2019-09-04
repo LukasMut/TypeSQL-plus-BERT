@@ -153,7 +153,7 @@ if __name__ == '__main__':
         
     assert isinstance(model, list), 'models have to be stored in list'
     
-    agg_m, sel_m, cond_m, agg_e, sel_e, cond_e = best_model_name(args)
+    agg_m1, sel_m1, cond_m1, agg_e1, sel_e1, cond_e1, agg_m2, sel_m2, cond_m2, agg_e2, sel_e2, cond_e2 = best_model_name(args)
 
     if args.train_emb: # Load pretrained model.
         agg_lm, sel_lm, cond_lm = best_model_name(args, for_load=True)
@@ -176,7 +176,13 @@ if __name__ == '__main__':
         
     if TRAIN_AGG:
         if args.ensemble != 'single':
-            for net in model:
+            for i, net in enumerate(model):
+                if i == 0:
+                    agg_m = agg_m1
+                    agg_e = agg_e1
+                else:
+                    agg_m = agg_m2
+                    agg_e = agg_e2
                 torch.save(net.agg_pred.state_dict(), agg_m)
                 torch.save(net.agg_type_embed_layer.state_dict(), agg_e)
         else:
@@ -184,7 +190,13 @@ if __name__ == '__main__':
             torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e)
     if TRAIN_SEL:
         if args.ensemble != 'single':
-            for net in model:
+            for i, net in enumerate(model):
+                if i == 0:
+                    sel_m = sel_m1
+                    sel_e = sel_e1
+                else:
+                    sel_m = sel_m2
+                    sel_e = sel_e2                
                 torch.save(net.selcond_pred.state_dict(), sel_m)
                 torch.save(net.sel_type_embed_layer.state_dict(), sel_e)         
         else:
@@ -192,7 +204,13 @@ if __name__ == '__main__':
             torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e)
     if TRAIN_COND:
         if args.ensemble != 'single':
-            for net in model:
+            for i, net in enumerate(model):
+                if i == 0:
+                    cond_m = cond_m1
+                    cond_e = cond_e1
+                else:
+                    cond_m = cond_m2
+                    cond_e = cond_e2                 
                 torch.save(net.op_str_pred.state_dict(), cond_m)
                 torch.save(net.cond_type_embed_layer.state_dict(), cond_e)    
         else:
@@ -223,16 +241,19 @@ if __name__ == '__main__':
                 best_agg_idx = i+1
                 torch.save(model[0].agg_pred.state_dict(),
                            args.sd_1 + '/epoch%d.agg_model%s'%(i+1, args.suffix))
-                torch.save(model[0].agg_pred.state_dict(), agg_m)
+                torch.save(model[0].agg_pred.state_dict(), agg_m1)
                 torch.save(model[0].agg_type_embed_layer.state_dict(),
                            args.sd_1 + '/epoch%d.agg_embed%s'%(i+1, args.suffix))
-                torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e)
+                torch.save(model[0].agg_type_embed_layer.state_dict(), agg_e1)
 
                 if args.ensemble != 'single':
                     torch.save(model[1].agg_pred.state_dict(),
                                 args.sd_2 + '/epoch%d.agg_model%s'%(i+1, args.suffix))
+                    torch.save(model[1].agg_pred.state_dict(), agg_m2)
                     torch.save(model[1].agg_type_embed_layer.state_dict(),
-                               args.sd_2 + '/epoch%d.agg_embed%s'%(i+1, args.suffix))                
+                               args.sd_2 + '/epoch%d.agg_embed%s'%(i+1, args.suffix)) 
+                    torch.save(model[1].agg_type_embed_layer.state_dict(), agg_e2)
+
                 
         if TRAIN_SEL:
             if val_acc[1][1] > best_sel_acc:
@@ -240,17 +261,21 @@ if __name__ == '__main__':
                 best_sel_idx = i+1
                 torch.save(model[0].selcond_pred.state_dict(),
                            args.sd_1 + '/epoch%d.sel_model%s'%(i+1, args.suffix))
-                torch.save(model[0].selcond_pred.state_dict(), sel_m)
+                torch.save(model[0].selcond_pred.state_dict(), sel_m1)
 
                 torch.save(model[0].sel_type_embed_layer.state_dict(),
                            args.sd_1 + '/epoch%d.sel_embed%s'%(i+1, args.suffix))
-                torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e)
+                torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e1)
                 
                 if args.ensemble != 'single':
                     torch.save(model[1].selcond_pred.state_dict(),
                                args.sd_2 + '/epoch%d.sel_model%s'%(i+1, args.suffix))
+                    torch.save(model[0].selcond_pred.state_dict(), sel_m2)
+                    
                     torch.save(model[0].sel_type_embed_layer.state_dict(),
                                 args.sd_2 + '/epoch%d.sel_embed%s'%(i+1, args.suffix))
+                    torch.save(model[0].sel_type_embed_layer.state_dict(), sel_e2)
+
                     
     
         if TRAIN_COND:
@@ -259,17 +284,21 @@ if __name__ == '__main__':
                 best_cond_idx = i+1
                 torch.save(model[0].op_str_pred.state_dict(),
                            args.sd_1 + '/epoch%d.cond_model%s'%(i+1, args.suffix))
-                torch.save(model[0].op_str_pred.state_dict(), cond_m)
+                torch.save(model[0].op_str_pred.state_dict(), cond_m1)
 
                 torch.save(model[0].cond_type_embed_layer.state_dict(),
                            args.sd_1 + '/epoch%d.cond_embed%s'%(i+1, args.suffix))
-                torch.save(model[0].cond_type_embed_layer.state_dict(), cond_e)
+                torch.save(model[0].cond_type_embed_layer.state_dict(), cond_e1)
                 
                 if args.ensemble != 'single':
                     torch.save(model[1].op_str_pred.state_dict(),
                                args.sd_2 + '/epoch%d.cond_model%s'%(i+1, args.suffix))
+                    torch.save(model[0].op_str_pred.state_dict(), cond_m2)
+
                     torch.save(model[1].cond_type_embed_layer.state_dict(),
                                 args.sd_2 + '/epoch%d.cond_embed%s'%(i+1, args.suffix))
+                    torch.save(model[0].cond_type_embed_layer.state_dict(), cond_e2)
+
                     
 
         print(' Best val acc = %s, on epoch %s individually'%(
