@@ -19,7 +19,7 @@ Source code accompanying TypeSQL's NAACL 2018 paper:[TypeSQL: Knowledge-based Ty
 2. Install Python dependency: `pip install -r requirements.txt`
 3. Install Pytorch: `pip install pytorch`
 4. Install Pytorch Transformers: `pip install pytorch-transformers`. Go to their repo for more information about requirements and dependencies.
-5. Install NLTK: pip install nltk
+5. Install NLTK: `pip install nltk`
 
 #### Download Data and Embeddings
 
