@@ -216,7 +216,7 @@ def epoch_train(models, optimizer, batch_size, sql_data, table_data, pred_entry,
     return cum_loss / len(sql_data)
 
 
-def epoch_exec_acc(models, batch_size, sql_data, table_data, db_path, db_content):
+def epoch_exec_acc(models, batch_size, sql_data, table_data, db_path, db_content,ensemble, BERT=False):
     engine = DBEngine(db_path)
     
     if len(models) > 1:
@@ -235,8 +235,17 @@ def epoch_exec_acc(models, batch_size, sql_data, table_data, db_path, db_content
     
     while st < len(sql_data):
         ed = st+batch_size if st+batch_size < len(perm) else len(perm)
-        q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type, raw_data = \
-            to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True)
+        
+        if ensemble == 'mixed':
+            q_seq_bert, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT = BERT)
+            q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT = False)
+        else:
+            q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT = BERT)
+      
+        
         raw_q_seq = [x[0] for x in raw_data]
         raw_col_seq = [x[1] for x in raw_data]
         query_gt, table_ids = to_batch_query(sql_data, perm, st, ed)
@@ -245,9 +254,18 @@ def epoch_exec_acc(models, batch_size, sql_data, table_data, db_path, db_content
         
         if len(models) > 1:
             scores = list()
-            for model in models_eval:
-                gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
-                score = model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True))
+            for i, model in enumerate(models_eval):
+                
+                if ensemble == 'mixed':
+                    if i == 0:
+                        gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
+                        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True))
+
+                    else:
+                        gt_where_seq = model.generate_gt_where_seq(q_seq_bert, col_seq, query_seq)               
+                        score = model.forward(q_seq_bert, col_seq, col_num, q_type, col_type, (True, True, True))
+                else:
+                    score = model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True))
                 scores.append(score)
             model = models_eval[0]    
             pred_queries = model.gen_query(scores, q_seq, col_seq,
