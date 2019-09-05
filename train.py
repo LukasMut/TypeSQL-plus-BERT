@@ -10,6 +10,7 @@ from typesql.utils import *
 from typesql.model.sqlnet import SQLNet
 from typesql.lib.dbengine import DBEngine
 from bert_utils import update_sql_data, remove_nonequal_questions, load_bert_dicts, plot_accs, plot_losses
+from pos_utils import *
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -29,14 +30,16 @@ if __name__ == '__main__':
             help='If provided: Use BERT context embeddings, Else: use GloVe embeddings')
     parser.add_argument('--merged', type=str, default='avg',
             help='max: use max-pooled bert embeddings, avg: use averaged bert embeddings, sum: use summed bert embeddings')
+    parser.add_argument('--POS', action='store_true',
+            help='Add Part-of-Speech embeddings')   
     parser.add_argument('--types', action='store_true',
             help='If provided: concatenate BERT with Type embeddings, Else: use BERT context embeddings only')
     parser.add_argument('--ensemble', type=str, default='single',
             help='single: single model, mixed: mixed ensemble (GloVe and BERT), homogeneous: homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT))')
     args = parser.parse_args()
 
-    #N_word=600
-    N_word = 100
+    #N_word=600 # BERT 600d, GloVe 300d, Para 300d
+    N_word = 100 # BERT 100d, GloVe 50d, Para 50d
     B_word=42
     if args.toy:
         USE_SMALL=True
@@ -76,7 +79,8 @@ if __name__ == '__main__':
             if N_word == 100:
                 id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMean.json", "./bert/id2embedMean100.json")
             elif N_word == 600:
-                id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMean.json", "./bert/id2embedMean600.json")         elif args.merged == 'sum':
+                id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMean.json", "./bert/id2embedMean600.json")
+        elif args.merged == 'sum':
             if N_word == 100:
                 id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokSum.json", "./bert/id2embedSum100.json")
             elif N_word == 600:
@@ -84,30 +88,43 @@ if __name__ == '__main__':
         else:
             raise Exception('Only max-pooled, averaged or summed bert embeddings can be loaded into memory')
         print("Bert embeddings have been loaded into memory")
+        print()
         bert_tuple = (id2tok, word_emb_bert)
     else:
         bert_tuple = None
         
-    #word_emb = load_word_emb('glove/glove.%dB.%dd.txt'%(B_word,N_word), \
-    #        load_used=args.train_emb, use_small=USE_SMALL)
+    if args.POS:
+        sql_data = update_sql_data_pos(sql_data)
+        val_sql_data = update_sql_data_pos(val_sql_data)
+        test_sql_data = update_sql_data_pos(test_sql_data)
+        print("SQL data has been updated with POS tags for each token")
+        print()
     
     if args.db_content == 0:
         
         if N_word == 100:
             word_emb = load_word_and_type_emb('./glove/glove.6B.50d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
+            print("Using GloVe 50d")
+            print()
         elif N_word == 600:
             word_emb = load_word_and_type_emb('./glove/glove.42B.300d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
+            print("Using GloVe 300d")
+            print()
     else:
         if N_word == 100:
             word_emb = load_concat_wemb('./glove/glove.6B.50d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt')
+            print("Using GloVe 50d")
+            print()
         elif N_word == 600:
             word_emb = load_concat_wemb('./glove/glove.42B.300d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt')
+            print("Using GloVe 300d")
+            print()
     
     if args.ensemble == 'mixed':
         model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                      word_emb_bert=None, BERT=False, types=args.types)
+                      word_emb_bert=None, BERT=False, types=args.types, POS=arg.POS)
         model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=args.POS)
         
         #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
         optimizer_1 = torch.optim.Adam(model_1.parameters(), lr=learning_rate, weight_decay = 0)
@@ -121,9 +138,9 @@ if __name__ == '__main__':
         
     elif args.ensemble == 'homogeneous' and args.BERT:
         model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-              word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types)
+              word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types, POS=args.POS)
         model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                      word_emb_bert=bert_tuple, BERT=args.BERT, types=False)
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=False)
         
         #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
         optimizer_1 = torch.optim.Adam(model_1.parameters(), lr=learning_rate, weight_decay = 0)
@@ -137,9 +154,9 @@ if __name__ == '__main__':
         
     elif args.ensemble == 'homogeneous' and not args.BERT:
         model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-              word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types)
+              word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types, POS=args.POS)
         model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=False)
         
         #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
         optimizer_1 = torch.optim.Adam(model_1.parameters(), lr=learning_rate, weight_decay = 0)
@@ -153,7 +170,7 @@ if __name__ == '__main__':
         
     elif args.ensemble == 'single':
         model = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
-                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
+                      word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=args.POS)
        
         #TODO: Change optimizer to RAdam as soon as there is an implementation available in PyTorch
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay = 0)
@@ -183,7 +200,7 @@ if __name__ == '__main__':
         model.cond_pred.load_state_dict(torch.load(cond_lm))
 
     #initial accuracy
-    init_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT, ensemble=args.ensemble)
+    init_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
     best_agg_acc = init_acc[1][0]
     best_agg_idx = 0
     best_sel_acc = init_acc[1][1]
@@ -229,14 +246,17 @@ if __name__ == '__main__':
         print('Epoch %d @ %s'%(i+1, datetime.datetime.now()))
         loss = epoch_train(
                 model, optimizer, BATCH_SIZE,
-                sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT, ensemble=args.ensemble)
+                sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
         losses.append(loss)
         print(' Loss = %s'%loss)
-        train_acc = epoch_acc(model, BATCH_SIZE, sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT, ensemble=args.ensemble)
+        train_acc = epoch_acc(model, BATCH_SIZE, sql_data, table_data, TRAIN_ENTRY, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
         train_accs.append(train_acc[0])
         print(' Train acc_qm: %s\n breakdown result: %s'% train_acc)
 
-        val_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, False, BERT=args.BERT, ensemble=args.ensemble) #for detailed error analysis, pass True to the end (second last argument before BERT)
+        val_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, False, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble) 
+        
+        #for detailed error analysis, pass True to the end (second last argument before BERT)
+        
         val_accs.append(val_acc[0])
         print(' Dev acc_qm: %s\n breakdown result: %s'%val_acc)
         

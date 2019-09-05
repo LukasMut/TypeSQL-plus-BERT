@@ -11,20 +11,27 @@ except ModuleNotFoundError:
     from typesql.model.modules.net_utils import run_lstm, col_name_encode
 
 class SelCondPredictor(nn.Module):
-    def __init__(self, N_word, N_h, N_depth, gpu, db_content, types):
+    def __init__(self, N_word, N_h, N_depth, gpu, db_content, types, POS):
         super(SelCondPredictor, self).__init__()
         self.N_h = N_h
         self.gpu = gpu
         self.types = types
+        self.POS = POS
 
         if db_content == 0:
             
             if types:
                 # with type embeddings concatentation
-                in_size = N_word+int(N_word/2)
+                if POS:
+                    in_size = N_word+N_word
+                else:
+                    in_size = N_word+int(N_word/2)
             else:
                 # without type embeddings concatenation
-                in_size = N_word
+                if POS:
+                    in_size = N_word+int(N_word/2)
+                else:
+                    in_size = N_word
             
         else:
             in_size = N_word+N_word
@@ -54,7 +61,7 @@ class SelCondPredictor(nn.Module):
         self.softmax = nn.Softmax() #dim=1
 
 
-    def forward(self, x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel):
+    def forward(self, x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel, x_pos_emb_var=None):
         max_x_len = max(x_len)
         max_col_len = max(col_len)
         B = len(x_len)
@@ -62,9 +69,15 @@ class SelCondPredictor(nn.Module):
         
         if self.types:
             # with type embeddings concatentation
-            x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
+            if self.POS:
+                x_emb_concat = torch.cat((x_emb_var, x_type_emb_var, x_pos_emb_var), 2)
+            else:
+                x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
         else:
-            x_emb_concat = x_emb_var
+            if self.POS:
+                x_emb_concat = torch.cat((x_emb_var, x_pos_emb_var), 2)
+            else:
+                x_emb_concat = x_emb_var
             
         e_col, _ = run_lstm(self.selcond_name_enc, col_inp_var, col_len)
         h_enc, _ = run_lstm(self.selcond_lstm, x_emb_concat, x_len)

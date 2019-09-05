@@ -22,7 +22,7 @@ class WordEmbedding(nn.Module):
         else:
             # else use word2vec or glove
             _, _, self.word_emb = word_emb
-            print("Using fixed embedding for words but trainable embedding for types")
+            print("Using fixed embeddings for words but trainable embeddings for types and pos tags")
             if word_emb_bert is not None:
                 self.idx2word, self.word_emb_bert = word_emb_bert
                 print("Using BERT context embeddings for questions")

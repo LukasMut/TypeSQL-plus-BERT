@@ -7,6 +7,7 @@ import numpy as np
 from typesql.utils import *
 from typesql.model.sqlnet import SQLNet
 from bert_utils import update_sql_data, remove_nonequal_questions, load_bert_dicts
+from pos_utils import *
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -24,6 +25,8 @@ if __name__ == '__main__':
             help='If provided: Use BERT context embeddings, Else: use GloVe embeddings')
     parser.add_argument('--merged', type=str, default='avg',
             help='max: use max-pooled bert embeddings, avg: use averaged bert embeddings, sum: use summed bert embeddings')
+    parser.add_argument('--POS', action='store_true',
+            help='Add Part-of-Speech embeddings')  
     parser.add_argument('--types', action='store_true',
             help='If provided: concatenate BERT with Type embeddings, Else: use BERT context embeddings only')
     parser.add_argument('--ensemble', type=str, default='single',
@@ -100,24 +103,31 @@ if __name__ == '__main__':
     else:
         bert_tuple = None
         
+    if args.POS:
+        sql_data = update_sql_data_pos(sql_data)
+        val_sql_data = update_sql_data_pos(val_sql_data)
+        test_sql_data = update_sql_data_pos(test_sql_data)
+        print("SQL data has been updated with POS tags for each token")
+        print()
+        
     if args.ensemble != 'single':
         
         agg_m1, sel_m1, cond_m1, agg_e1, sel_e1, cond_e1, agg_m2, sel_m2, cond_m2, agg_e2, sel_e2, cond_e2 = best_model_name(args)
         
         if args.ensemble == 'mixed':
             
-            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=None, BERT=False, types=args.types)
-            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
+            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=None, BERT=False, types=args.types, POS=args.POS)
+            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=args.POS)
             
         elif args.ensemble == 'homogeneous' and args.BERT:
             
-            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types)
-            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=False)
+            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types, POS=args.POS)
+            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=False)
 
         elif args.ensemble == 'homogeneous' and not args.BERT:
             
-            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types)
-            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)
+            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types, POS=args.POS)
+            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=False)
        
         model = [model_1, model_2]
 
@@ -155,7 +165,7 @@ if __name__ == '__main__':
     elif args.ensemble == 'single':
         
         agg_m, sel_m, cond_m, agg_e, sel_e, cond_e = best_model_name(args)
-        model = [SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)]
+        model = [SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=args.POS)]
    
         print("Loading from %s"%agg_m)
         model[0].agg_pred.load_state_dict(torch.load(agg_m))
@@ -174,8 +184,8 @@ if __name__ == '__main__':
 
     accs = dict()
     
-    dev_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TEST_ENTRY, args.db_content, BERT=args.BERT, ensemble=args.ensemble)
-    dev_exec_acc= epoch_exec_acc(model, BATCH_SIZE, val_sql_data, val_table_data, DEV_DB, args.db_content, ensemble=args.ensemble, BERT=args.BERT)
+    dev_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TEST_ENTRY, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
+    dev_exec_acc= epoch_exec_acc(model, BATCH_SIZE, val_sql_data, val_table_data, DEV_DB, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
     
     accs['dev']=dev_acc[0]
     accs['dev_exec']=dev_exec_acc
@@ -183,8 +193,8 @@ if __name__ == '__main__':
     print("Dev acc_qm: %s;\n  breakdown on (agg, sel, where): %s"% dev_acc)
     print("Dev execution acc: %s"% dev_exec_acc)
     
-    test_acc = epoch_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_ENTRY, args.db_content, BERT=args.BERT, ensemble=args.ensemble)
-    test_exec_acc = epoch_exec_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_DB, args.db_content, ensemble=args.ensemble, BERT=args.BERT)
+    test_acc = epoch_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_ENTRY, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
+    test_exec_acc = epoch_exec_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_DB, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
     
     accs['test']=test_acc[0]
     accs['test_exec']=test_exec_acc
