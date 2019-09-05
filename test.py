@@ -121,64 +121,76 @@ if __name__ == '__main__':
        
         model = [model_1, model_2]
 
-        print("Loading from %s"%agg_m)
+        print("Loading from %s"%agg_m1)
         model[0].agg_pred.load_state_dict(torch.load(agg_m1))
-        print("Loading from %s"%sel_m)
+        print("Loading from %s"%sel_m1)
         model[0].selcond_pred.load_state_dict(torch.load(sel_m1))
-        print("Loading from %s"%cond_m)
+        print("Loading from %s"%cond_m1)
         model[0].op_str_pred.load_state_dict(torch.load(cond_m1))
         
-        print("Loading from %s"%agg_m)
+        print("Loading from %s"%agg_m2)
         model[1].agg_pred.load_state_dict(torch.load(agg_m2))
-        print("Loading from %s"%sel_m)
+        print("Loading from %s"%sel_m2)
         model[1].selcond_pred.load_state_dict(torch.load(sel_m2))
-        print("Loading from %s"%cond_m)
+        print("Loading from %s"%cond_m2)
         model[1].op_str_pred.load_state_dict(torch.load(cond_m2))
         
         #only for loading trainable embedding
-        print("Loading from %s"%agg_e)
+        print("Loading from %s"%agg_e1)
         model[0].agg_type_embed_layer.load_state_dict(torch.load(agg_e1))
-        print("Loading from %s"%sel_e)
+        print("Loading from %s"%sel_e1)
         model[0].sel_type_embed_layer.load_state_dict(torch.load(sel_e1))
-        print("Loading from %s"%cond_e)
+        print("Loading from %s"%cond_e1)
         model[0].cond_type_embed_layer.load_state_dict(torch.load(cond_e1))
 
         #only for loading trainable embedding
-        print("Loading from %s"%agg_e)
+        print("Loading from %s"%agg_e2)
         model[1].agg_type_embed_layer.load_state_dict(torch.load(agg_e1))
-        print("Loading from %s"%sel_e)
+        print("Loading from %s"%sel_e2)
         model[1].sel_type_embed_layer.load_state_dict(torch.load(sel_e1))
-        print("Loading from %s"%cond_e)
+        print("Loading from %s"%cond_e2)
         model[1].cond_type_embed_layer.load_state_dict(torch.load(cond_e1))
 
         
     elif args.ensemble == 'single':
         
         agg_m, sel_m, cond_m, agg_e, sel_e, cond_e = best_model_name(args)
-        model = [SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT)]
+        model = [SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types)]
    
-    print("Loading from %s"%agg_m)
-    model[0].agg_pred.load_state_dict(torch.load(agg_m))
-    print("Loading from %s"%sel_m)
-    model[0].selcond_pred.load_state_dict(torch.load(sel_m))
-    print("Loading from %s"%cond_m)
-    model[0].op_str_pred.load_state_dict(torch.load(cond_m))
+        print("Loading from %s"%agg_m)
+        model[0].agg_pred.load_state_dict(torch.load(agg_m))
+        print("Loading from %s"%sel_m)
+        model[0].selcond_pred.load_state_dict(torch.load(sel_m))
+        print("Loading from %s"%cond_m)
+        model[0].op_str_pred.load_state_dict(torch.load(cond_m))
 
-    #only for loading trainable embedding
-    print("Loading from %s"%agg_e)
-    model[0].agg_type_embed_layer.load_state_dict(torch.load(agg_e))
-    print("Loading from %s"%sel_e)
-    model[0].sel_type_embed_layer.load_state_dict(torch.load(sel_e))
-    print("Loading from %s"%cond_e)
-    model[0].cond_type_embed_layer.load_state_dict(torch.load(cond_e))
+        #only for loading trainable embedding
+        print("Loading from %s"%agg_e)
+        model[0].agg_type_embed_layer.load_state_dict(torch.load(agg_e))
+        print("Loading from %s"%sel_e)
+        model[0].sel_type_embed_layer.load_state_dict(torch.load(sel_e))
+        print("Loading from %s"%cond_e)
+        model[0].cond_type_embed_layer.load_state_dict(torch.load(cond_e))
 
-
-    print("Dev acc_qm: %s;\n  breakdown on (agg, sel, where): %s"%epoch_acc(
-            model, BATCH_SIZE, val_sql_data, val_table_data, TEST_ENTRY, args.db_content))
-    print("Dev execution acc: %s"%epoch_exec_acc(
-            model, BATCH_SIZE, val_sql_data, val_table_data, DEV_DB, args.db_content))
+    accs = dict()
     
-    print("Test acc_qm: %s;\n  breakdown on (agg, sel, where): %s"%epoch_acc(
-            model, BATCH_SIZE, test_sql_data, test_table_data, TEST_ENTRY, args.db_content))
-    print("Test execution acc: %s"%epoch_exec_acc(
-            model, BATCH_SIZE, test_sql_data, test_table_data, TEST_DB, args.db_content))
+    dev_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TEST_ENTRY, args.db_content)
+    dev_exec_acc= epoch_exec_acc(model, BATCH_SIZE, val_sql_data, val_table_data, DEV_DB, args.db_content)
+    
+    accs['dev']=dev_acc[0]
+    accs['dev_exec']=dev_exec_acc
+    
+    print("Dev acc_qm: %s;\n  breakdown on (agg, sel, where): %s"% dev_acc)
+    print("Dev execution acc: %s"% dev_exec_acc)
+    
+    test_acc = epoch_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_ENTRY, args.db_content)
+    test_exec_acc = epoch_exec_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_DB, args.db_content)
+    
+    accs['test']=test_acc[0]
+    accs['test_exec']=test_exec_acc
+    
+    print("Test acc_qm: %s;\n  breakdown on (agg, sel, where): %s"% test_acc)
+    print("Test execution acc: %s"% test_exec_acc )
+    
+    with open('results.json', 'w') as f:
+        json.dump(accs, f)
