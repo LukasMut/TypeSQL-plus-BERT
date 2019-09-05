@@ -5,11 +5,11 @@ Please cite both TypeSQL and SQLNet if you use this code.
 
 BERT byte-pair encoded tokens had to be rejoined into WikiSQL tokens as otherwise the SQL generation task will not work (due to BERT tokenizer's sub-word splitting). See files `retokenizer.py` and `bert_utils.py` for implementation.
 
+Moreover, I extended TypeSQL's single model approach with an ensemble method (weighted averaging) - both TypeSQL nets are learning simultaneously (forward step and backprop are computed for both nets) but only one of the two will perform the final translation task (always the same network) given the averaged predictions of both sytems - to monitor dev performance of the ensemble. The respective best model of each member of the ensemble is saved in a separate folder to load for testing.
+
 ## TypeSQL with POS ensemble
 
 Natural language questions were tagged using NLTK's POS tagger.  Ensemble of TypeSQL with POS embeddings.
-
-Moreover, I extended TypeSQL's single model approach with an ensemble method (weighted averaging) - both TypeSQL nets are learning simultaneously (forward step and backprop are computed for both nets) but only one of the two will perform the final translation task (always the same network) given the averaged predictions of both sytems - to monitor dev performance of the ensemble. The respective best model of each member of the ensemble is saved in a separate folder to load for testing.
 
 ## TypeSQL
 
