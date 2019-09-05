@@ -39,8 +39,8 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
  --sd_1 saved_model_kg_single (set model save directory for single model)
  --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
  --train_emb (Train word embeddings)
- --BERT True (False, if you want to use GloVe)
- --types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
+ --BERT (Use Bert embeddings instead of GloVe)
+ --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
  --merged (use max-pooled, averaged or summed BERT embeddings)
  --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
@@ -54,8 +54,8 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
   --sd_2 saved_model_con_second (set save directory for second model, if ensemble computation)
   --db_content 1
   --train_emb (Train word embeddings)
-  --BERT True (False, if you want to use GloVe)
-  --types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
+  --BERT (Use Bert embeddings instead of GloVe)
+  --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
   --merged (use max-pooled, averaged or summed BERT embeddings)
   --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
