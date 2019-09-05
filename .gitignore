@@ -522,3 +522,4 @@ typesql/model/modules/__pycache__/condtion_op_str_predict.cpython-37.pyc
 typesql/model/modules/__pycache__/sel_condition_predict.cpython-37.pyc
 typesql/model/modules/__pycache__/word_embedding.cpython-37.pyc
 __pycache__/bert_utils.cpython-37.pyc
+__pycache__/bert_utils.cpython-37.pyc
