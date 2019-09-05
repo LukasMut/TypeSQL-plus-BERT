@@ -183,7 +183,7 @@ if __name__ == '__main__':
     print("Dev acc_qm: %s;\n  breakdown on (agg, sel, where): %s"% dev_acc)
     print("Dev execution acc: %s"% dev_exec_acc)
     
-    test_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TEST_ENTRY, args.db_content, BERT=args.BERT, ensemble=args.ensemble)
+    test_acc = epoch_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_ENTRY, args.db_content, BERT=args.BERT, ensemble=args.ensemble)
     test_exec_acc = epoch_exec_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_DB, args.db_content, ensemble=args.ensemble, BERT=args.BERT)
     
     accs['test']=test_acc[0]
