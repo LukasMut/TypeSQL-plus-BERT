@@ -25,12 +25,12 @@ if __name__ == '__main__':
             help='0: use knowledge graph type, 1: use db content to get type info')
     parser.add_argument('--train_emb', action='store_true',
             help='Train word embedding.')
-    parser.add_argument('--BERT', type=bool, default=True,
-            help='False: use GloVe "no context" embeddings, True: use BERT context embeddings')
+    parser.add_argument('--BERT', action='store_true',
+            help='If provided: Use BERT context embeddings, Else: use GloVe embeddings')
     parser.add_argument('--merged', type=str, default='avg',
             help='max: use max-pooled bert embeddings, avg: use averaged bert embeddings, sum: use summed bert embeddings')
-    parser.add_argument('--types', type=bool, default=False,
-            help='False: use BERT context embeddings only, True: concatenate BERT with Type embeddings')
+    parser.add_argument('--types', action='store_true',
+            help='If provided: concatenate BERT with Type embeddings, Else: use BERT context embeddings only')
     parser.add_argument('--ensemble', type=str, default='single',
             help='single: single model, mixed: mixed ensemble (GloVe and BERT), homogeneous: homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT))')
     args = parser.parse_args()
@@ -68,11 +68,19 @@ if __name__ == '__main__':
         print()
         print("Loading bert embeddings...")
         if args.merged == 'max':
-            id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMax.json", "./bert/id2embedMax100.json")
+            if N_word == 100:
+                id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMax.json", "./bert/id2embedMax100.json")
+            elif N_word == 600:
+                id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMax.json", "./bert/id2embedMax600.json")
         elif args.merged == 'avg':
-            id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMean.json", "./bert/id2embedMean100.json")
-        elif args.merged == 'sum':
-            id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokSum.json", "./bert/id2embedSum.json")
+            if N_word == 100:
+                id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMean.json", "./bert/id2embedMean100.json")
+            elif N_word == 600:
+                id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokMean.json", "./bert/id2embedMean600.json")         elif args.merged == 'sum':
+            if N_word == 100:
+                id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokSum.json", "./bert/id2embedSum100.json")
+            elif N_word == 600:
+                id2tok, word_emb_bert = load_bert_dicts("./bert/id2tokSum.json", "./bert/id2embedSum600.json")
         else:
             raise Exception('Only max-pooled, averaged or summed bert embeddings can be loaded into memory')
         print("Bert embeddings have been loaded into memory")
@@ -84,10 +92,16 @@ if __name__ == '__main__':
     #        load_used=args.train_emb, use_small=USE_SMALL)
     
     if args.db_content == 0:
-        word_emb = load_word_and_type_emb('glove/glove.6B.50d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt',\
-                                            val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
+        
+        if N_word == 100:
+            word_emb = load_word_and_type_emb('./glove/glove.6B.50d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
+        elif N_word == 600:
+            word_emb = load_word_and_type_emb('./glove/glove.42B.300d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
     else:
-        word_emb = load_concat_wemb('glove/glove.6B.50d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt')
+        if N_word == 100:
+            word_emb = load_concat_wemb('./glove/glove.6B.50d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt')
+        elif N_word == 600:
+            word_emb = load_concat_wemb('./glove/glove.42B.300d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt')
     
     if args.ensemble == 'mixed':
         model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content,
