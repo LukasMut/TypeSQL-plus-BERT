@@ -487,3 +487,10 @@ saved_model_kg_single/old_sqlnet.cond_embed
 saved_model_kg_single/old_sqlnet.cond_model
 saved_model_kg_single/old_sqlnet.sel_embed
 saved_model_kg_single/old_sqlnet.sel_model
+typesql/model/modules/__pycache__/word_embedding.cpython-37.pyc
+typesql/model/modules/__pycache__/sel_condition_predict.cpython-37.pyc
+typesql/model/modules/__pycache__/condtion_op_str_predict.cpython-37.pyc
+typesql/model/__pycache__/sqlnet.cpython-37.pyc
+typesql/lib/__pycache__/dbengine.cpython-37.pyc
+typesql/__pycache__/utils.cpython-37.pyc
+__pycache__/bert_utils.cpython-37.pyc
