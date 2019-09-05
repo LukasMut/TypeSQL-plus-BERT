@@ -103,11 +103,11 @@ if __name__ == '__main__':
     if args.db_content == 0:
         
         if N_word == 100:
-            word_emb = load_word_and_type_emb('./glove/glove.6B.50d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
+            word_emb = load_word_and_type_emb('./glove/glove.6B.50d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
             print("Using GloVe 50d")
             print()
         elif N_word == 600:
-            word_emb = load_word_and_type_emb('./glove/glove.42B.300d.txt', 'para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
+            word_emb = load_word_and_type_emb('./glove/glove.42B.300d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
             print("Using GloVe 300d")
             print()
     else:
@@ -255,7 +255,7 @@ if __name__ == '__main__':
 
         val_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TRAIN_ENTRY, args.db_content, False, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble) 
         
-        #for detailed error analysis, pass True to the end (second last argument before BERT)
+        #for detailed error analysis, pass True to the end (argument before BERT)
         
         val_accs.append(val_acc[0])
         print(' Dev acc_qm: %s\n breakdown result: %s'%val_acc)
