@@ -202,5 +202,12 @@ if __name__ == '__main__':
     print("Test acc_qm: %s;\n  breakdown on (agg, sel, where): %s"% test_acc)
     print("Test execution acc: %s"% test_exec_acc )
     
-    with open('results.json', 'w') as f:
+    RESULTS = 'results'
+    POS = '_pos' if args.POS else ''
+    BERT = '_bert' if args.BERT else ''
+    ENSEMBLE = '_single' if args.ensemble=='single' else '_ensemble'
+    TYPES = '_types' if args.types else ''
+    DB = '_kg' if args.db_content==0 else '_db'
+    
+    with open(RESULTS+POS+BERT+ENSEMBLE+TYPES+DB+'.json', 'w') as f:
         json.dump(accs, f)
