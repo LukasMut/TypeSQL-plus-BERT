@@ -211,18 +211,25 @@ if __name__ == '__main__':
     accs['test']['total_acc']=test_acc[0]
     accs['test']['exec_acc']=test_exec_acc
     
-    RESULTS = 'results'
-    DIMS = '_100' if N_word==100 else '600'
+    DIMS = '100d' if N_word==100 else '600d'
     POS = '_pos' if args.POS else ''
     BERT = '_bert' if args.BERT else ''
+    TYPES = '_types' if args.types else ''
     if args.ensemble=='single':
         ENSEMBLE = '_single'
     elif args.ensemble=='mixed':
         ENSEMBLE = '_mixed'
     elif args.ensemble=='homogeneous':
         ENSEMBLE = '_homogeneous'
-    TYPES = '_types' if args.types else ''
     DB = '_kg' if args.db_content==0 else '_db'
     
-    with open('./results/'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.json', 'w') as f:
-        json.dump(accs, f)
+    if args.BERT:
+        if args.merged=='max':
+            MERGED='_max-pool'
+        elif args.merged=='avg':
+            MERGED='_avg'
+        with open('./results/'+DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
+            json.dump(accs, f)
+    else:
+        with open('./results/'+DIMS+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
+            json.dump(accs, f)        
