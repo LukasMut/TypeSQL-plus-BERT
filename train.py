@@ -243,7 +243,7 @@ if __name__ == '__main__':
     losses = list()
     train_accs = list()
     val_accs = list()
-    for i in range(3): #TODO: change to 100 !
+    for i in range(100):
         print('Epoch %d @ %s'%(i+1, datetime.datetime.now()))
         loss = epoch_train(
                 model, optimizer, BATCH_SIZE,
@@ -357,9 +357,9 @@ if __name__ == '__main__':
 
     
     plt.clf() # clear current figure, but leave window opened
-    plot_accs(list(range(1,4)), train_accs, val_accs) #TODO: change end of range back to 101
+    plot_accs(list(range(1,101)), train_accs, val_accs) #TODO: change end of range back to 101
     plt.savefig('./plots/accs/'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.png')
     plt.close() 
-    plot_losses(list(range(1,4)), losses) #TODO: change end of range back to 101
+    plot_losses(list(range(1,101)), losses) #TODO: change end of range back to 101
     plt.savefig('./plots/losses/'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.png')
     plt.close('all')
