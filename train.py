@@ -355,11 +355,10 @@ if __name__ == '__main__':
     with open('./results/'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.json', 'w') as f:
         json.dump(accs, f)
 
-    
     plt.clf() # clear current figure, but leave window opened
-    plot_accs(list(range(1,101)), train_accs, val_accs) #TODO: change end of range back to 101
+    plot_accs(list(range(1,101)), train_accs, val_accs)
     plt.savefig('./plots/accs/'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.png')
-    plt.close() 
-    plot_losses(list(range(1,101)), losses) #TODO: change end of range back to 101
+    plt.close() #plt.clf()
+    plot_losses(list(range(1,101)), losses)
     plt.savefig('./plots/losses/'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.png')
     plt.close('all')
