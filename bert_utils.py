@@ -464,11 +464,11 @@ def plot_accs(n_epochs, train_accs, val_accs):
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
     plt.legend(['training', 'validation'], loc='lower right')
-    plt.show()
+    plt.show(block=False)
 
 def plot_losses(n_epochs, losses):
     plt.plot(n_epochs, losses, color='blue')
     plt.title("TypeSQL's learning curve during training")
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
-    plt.show()
+    plt.show(block=False)
