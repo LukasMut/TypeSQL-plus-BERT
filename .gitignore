@@ -530,3 +530,10 @@ typesql/model/modules/__pycache__/condtion_op_str_predict.cpython-37.pyc
 typesql/model/modules/__pycache__/sel_condition_predict.cpython-37.pyc
 typesql/model/modules/__pycache__/word_embedding.cpython-37.pyc
 __pycache__/bert_utils.cpython-37.pyc
+results/results_100_pos_bert_single_types_kg.json
+typesql/__pycache__/utils.cpython-37.pyc
+typesql/lib/__pycache__/dbengine.cpython-37.pyc
+typesql/model/__pycache__/sqlnet.cpython-37.pyc
+typesql/model/modules/__pycache__/condtion_op_str_predict.cpython-37.pyc
+typesql/model/modules/__pycache__/sel_condition_predict.cpython-37.pyc
+typesql/model/modules/__pycache__/word_embedding.cpython-37.pyc

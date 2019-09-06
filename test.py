@@ -182,13 +182,9 @@ if __name__ == '__main__':
         print("Loading from %s"%cond_e)
         model[0].cond_type_embed_layer.load_state_dict(torch.load(cond_e))
 
-    accs = dict()
     
     dev_acc = epoch_acc(model, BATCH_SIZE, val_sql_data, val_table_data, TEST_ENTRY, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
     dev_exec_acc= epoch_exec_acc(model, BATCH_SIZE, val_sql_data, val_table_data, DEV_DB, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
-    
-    accs['dev']=dev_acc[0]
-    accs['dev_exec']=dev_exec_acc
     
     print("Dev acc_qm: %s;\n  breakdown on (agg, sel, where): %s"% dev_acc)
     print("Dev execution acc: %s"% dev_exec_acc)
@@ -196,18 +192,37 @@ if __name__ == '__main__':
     test_acc = epoch_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_ENTRY, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
     test_exec_acc = epoch_exec_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_DB, args.db_content, BERT=args.BERT, POS=args.POS, ensemble=args.ensemble)
     
-    accs['test']=test_acc[0]
-    accs['test_exec']=test_exec_acc
-    
     print("Test acc_qm: %s;\n  breakdown on (agg, sel, where): %s"% test_acc)
     print("Test execution acc: %s"% test_exec_acc )
     
+    accs = dict()
+    accs['dev']=dict()
+    accs['test']=dict()
+    
+    accs['dev']['agg']=dev_acc[1][0]
+    accs['dev']['sel']=dev_acc[1][1]
+    accs['dev']['where']=dev_acc[1][2]
+    accs['dev']['total_acc']=dev_acc[0]
+    accs['dev']['exec_acc']=dev_exec_acc
+    
+    accs['test']['agg']=test_acc[1][0]
+    accs['test']['sel']=test_acc[1][1]
+    accs['test']['where']=test_acc[1][2]
+    accs['test']['total_acc']=test_acc[0]
+    accs['test']['exec_acc']=test_exec_acc
+    
     RESULTS = 'results'
+    DIMS = '_100' if N_word==100 else '600'
     POS = '_pos' if args.POS else ''
     BERT = '_bert' if args.BERT else ''
-    ENSEMBLE = '_single' if args.ensemble=='single' else '_ensemble'
+    if args.ensemble=='single':
+        ENSEMBLE = '_single'
+    elif args.ensemble=='mixed':
+        ENSEMBLE = '_mixed'
+    elif args.ensemble=='homogeneous':
+        ENSEMBLE = '_homogeneous'
     TYPES = '_types' if args.types else ''
     DB = '_kg' if args.db_content==0 else '_db'
     
-    with open(RESULTS+POS+BERT+ENSEMBLE+TYPES+DB+'.json', 'w') as f:
+    with open('./results/'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.json', 'w') as f:
         json.dump(accs, f)

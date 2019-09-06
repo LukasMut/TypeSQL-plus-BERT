@@ -243,7 +243,7 @@ if __name__ == '__main__':
     losses = list()
     train_accs = list()
     val_accs = list()
-    for i in range(100):
+    for i in range(5):
         print('Epoch %d @ %s'%(i+1, datetime.datetime.now()))
         loss = epoch_train(
                 model, optimizer, BATCH_SIZE,
@@ -324,8 +324,42 @@ if __name__ == '__main__':
         print(' Best val acc = %s, on epoch %s individually'%(
                 (best_agg_acc, best_sel_acc, best_cond_acc),
                 (best_agg_idx, best_sel_idx, best_cond_idx)))
-   
+    
+    
+    accs = dict()
+    accs['train']=dict()
+    accs['dev']=dict()
+    
+    accs['train']['max']=max(train_accs)
+    accs['train']['agg']=train_acc[1][0]
+    accs['train']['sel']=train_acc[1][1]
+    accs['train']['where']=train_acc[1][2]
+    accs['dev']['max']=max(val_accs)
+    accs['dev']['agg']=best_agg_acc
+    accs['dev']['sel']=best_sel_acc
+    accs['dev']['where']=best_cond_acc
+    
+    RESULTS = 'results'
+    DIMS = '_100' if N_word==100 else '600'
+    POS = '_pos' if args.POS else ''
+    BERT = '_bert' if args.BERT else ''
+    if args.ensemble=='single':
+        ENSEMBLE = '_single'
+    elif args.ensemble=='mixed':
+        ENSEMBLE = '_mixed'
+    elif args.ensemble=='homogeneous':
+        ENSEMBLE = '_homogeneous'
+    TYPES = '_types' if args.types else ''
+    DB = '_kg' if args.db_content==0 else '_db'
+    
+    with open('./results/'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.json', 'w') as f:
+        json.dump(accs, f)
 
+    
     plt.clf() # clear current figure, but leave window opened
     plot_accs(list(range(1,101)), train_accs, val_accs)
+    plt.savefig('./plots/accs'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.png')
+    plt.clf()
     plot_losses(list(range(1,101)), losses)
+    plt.savefig('./plots/losses'+RESULTS+DIMS+POS+BERT+ENSEMBLE+TYPES+DB+'.png')
+    plt.close('all')
