@@ -35,7 +35,7 @@ def extract_questions(sql_data, tokenize = True):
     key = 'question_tok' if tokenize else 'question'
     return list(map(lambda el:el[key], sql_data))
 
-def bert_preprocessing(questions, tok2ids_tuple = False, flatten = False):
+def bert_preprocessing(questions):
     """
         Args: Raw natural language questions represented as strings. 
         Computation: Sentence preprocessing steps necessary for BERT model.
@@ -132,7 +132,7 @@ def bert_embeddings(bert_questions, bert_ids, segment_ids, sql_data, merge, arbi
                                                                                bert_question[1:-1], 
                                                                                bert_id[1:-1], 
                                                                                arbitrary_id,
-                                                                               bert_embeddings)
+                                                                               bert_embeddings[1:-1])
             arbitrary_id = new_id   
             try:
                 assert len(new_ids) == len(new_toks) == len(new_embeddings) == len(question['question_tok'])
