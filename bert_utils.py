@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import calendar
 import json
 import re
 import torch
+import unicodedata
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -59,171 +59,9 @@ def bert_preprocessing(questions, tok2ids_tuple = False, flatten = False):
     
     return tok_questions, indexed_tokens, segment_ids, idx2word
       
-def get_chunk(indexes, span, i):
-    start = indexes[-1] if len(indexes) > 0 else 0
-    if isinstance(span[i-1], int):
-        chunk = [tok_id for tok_id in span[start:i+1]]
-        if isinstance(span[start-1], list):
-            if abs(span[start-1][-1]-span[start]) > 1:
-                chunk.insert(0, min(chunk)-1)
-        else:
-            if abs(span[start-1]-span[start]) > 1 or span[start-1] == span[i]:
-                chunk.insert(0, min(chunk)-1)
-    else:
-        if abs(span[start-1][-1]-span[start]) == 1:
-            chunk = [span[i]]
-        else:
-            chunk = [span[i]-1, span[i]]
-    return chunk
 
-def chunk_indexes(span):    
-    chunks = list()
-    indexes = list()
-    if len(span) == 1 and isinstance(span[0], int):
-        span.insert(0, span[0]-1)
-        return [span]
-    elif len(span) == 1 and isinstance(span[0], list):
-        span = span[0]
-        span.insert(0, span[0]-1)
-        return [span]
-    else:
-        for i, tok_id in enumerate(span): 
-            if i > 0:
-                if isinstance(tok_id, list) and i < len(span)-1:
-                    chunks.append(tok_id)
-                    indexes.append(i+1)
-                elif isinstance(tok_id, list) and i == len(span)-1:
-                    chunks.append(tok_id)
-                else:
-                    try:
-                        if isinstance(span[i-1], int) and isinstance(span[i+1], int):
-                            if (tok_id-span[i-1] == 1) and (abs(tok_id-span[i+1]) > 1):
-                                chunk = get_chunk(indexes, span, i)
-                                chunks.append(chunk)
-                                indexes.append(i+1)
-                            elif (abs(tok_id-span[i-1]) > 1) and (abs(tok_id-span[i+1]) > 1):
-                                chunks.append([tok_id-1, tok_id])
-                                indexes.append(i+1)
-                        elif isinstance(span[i-1], int) and isinstance(span[i+1], list):
-                            if (tok_id-span[i-1] == 1):
-                                chunk = get_chunk(indexes, span, i)
-                                chunks.append(chunk)
-                                indexes.append(i+1)
-                            else:
-                                chunks.append([tok_id-1, tok_id])
-                                indexes.append(i+1)
-                        elif isinstance(span[i-1], list) and isinstance(span[i+1], int):
-                            if (abs(tok_id-span[i+1]) > 1):
-                                chunk = get_chunk(indexes, span, i)
-                                chunks.append(chunk)
-                                indexes.append(i+1)
-                    except IndexError: # we are at the end of the list
-                        if isinstance(span[i-1], int):
-                            if (tok_id-span[i-1] == 1):
-                                chunk = get_chunk(indexes, span, i)
-                                chunks.append(chunk)
-                            else:
-                                chunks.append([tok_id-1, tok_id])
-                        else:
-                            chunk = get_chunk(indexes, span, i)
-                            chunks.append(chunk)
-            else:
-                if isinstance(tok_id, list):
-                    tok_id.insert(0, tok_id[0]-1)
-                    indexes.append(i+1)
-                else:
-                    if isinstance(span[i+1], list) or abs(tok_id-span[i+1]) > 1:
-                        chunks.append([tok_id-1, tok_id])
-                        indexes.append(i+1)
-        return chunks
-
-def check_type(chunk_id):
-    for idx in chunk_id:
-        if idx == None:
-            return False
-    return True
-
-def merge_token_ids_embed(bert_toks, bert_ids, arbitrary_id, merge, bert_embeddings=list()):
-    month_names = list(map(lambda x: calendar.month_name[x].lower(), range(1,13)))
-    bert_toks = bert_toks[1:-1]
-    bert_ids = bert_ids[1:-1]
-
-    if len(bert_embeddings) > 0:
-        bert_embeddings = bert_embeddings[1:-1]
-        retokenizer = Retokenizer(merge, embeddings=True)
-    else:
-        retokenizer = Retokenizer(merge, embeddings=False)
-        
-    ids_to_rejoin = list()
-    for i, bert_tok in enumerate(bert_toks):  
-        if i < len(bert_toks)-1:
-            if re.search(r'#+\w+', bert_tok) and not re.search(r'#+\w+', bert_toks[i-1]) and re.search(r'#+\w+', bert_toks[i-2]) and not re.search(r'#+\w+', bert_toks[i+1]):
-                ids_to_rejoin.append([i-1, i])
-            elif re.search(r'#+\w+', bert_tok):
-                ids_to_rejoin.append(i)
-            if re.search(r"'", bert_tok) and (re.search(r'what|who|why|where|how', bert_toks[i-1]) or re.search(r'^s$', bert_toks[i+1])):
-                ids_to_rejoin.append(i+1)
-            elif re.search(r"\.", bert_tok) and (re.search(r"[a-zA-Z]+", bert_toks[i-1]) and re.search(r"\w+", bert_toks[i+1])):
-                ids_to_rejoin.append(i)
-            elif re.search(r"'", bert_tok) and not (re.search(r'what|who|why|where|how', bert_toks[i-1])  or re.search(r'^(s|\?)$', bert_toks[i+1])):
-                ids_to_rejoin.append(i)
-                ids_to_rejoin.append(i+1)
-            elif re.search(r"\.|-|/", bert_tok) and not re.search(r'^\?$', bert_toks[i+1]):
-                ids_to_rejoin.append(i)
-                ids_to_rejoin.append(i+1)   
-            try:
-                if re.search(r",|:", bert_tok) and (re.search(r"[0-9]+", bert_toks[i-1]) and re.search(r"[0-9]+", bert_toks[i+1]) and re.search(r",", bert_toks[i+2]) and re.search(r"[0-9]+", bert_toks[i+3])):
-                    ids_to_rejoin.append(i)
-                    ids_to_rejoin.append(i+1)
-                    ids_to_rejoin.append(i+2)
-                    ids_to_rejoin.append(i+3)                                                                                       
-                elif re.search(r",|:", bert_tok) and re.search(r"[0-9]+", bert_toks[i-1]) and re.search(r"[0-9]+", bert_toks[i+1]) and not ((re.search(r",", bert_toks[i+2]) and re.search(r"[0-9]+", bert_toks[i+3])) or (re.search(r",", bert_toks[i-2]) and re.search(r"[0-9]+", bert_toks[i-3])) or bert_toks[i-2] in month_names or (re.search(r'-', bert_toks[i-2]) and re.search(r'-', bert_toks[i+2]))):
-                    ids_to_rejoin.append(i)
-                    ids_to_rejoin.append(i+1)
-            except IndexError:
-                if re.search(r",|:", bert_tok) and re.search(r"[0-9]+", bert_toks[i-1]) and re.search(r"[0-9]+", bert_toks[i+1]) and not (bert_toks[i-2] in month_names or re.search(r'-', bert_toks[i-2])):
-                    ids_to_rejoin.append(i)
-                    ids_to_rejoin.append(i+1)
-                elif re.search(r"\+", bert_tok) and re.search(r"[0-9]+", bert_toks[i+1]):
-                    ids_to_rejoin.append(i+1)
-        else:
-            if re.search(r'#+\w+', bert_tok) and not re.search(r'#+\w+', bert_toks[i-1]) and re.search(r'#+\w+', bert_toks[i-2]):
-                ids_to_rejoin.append([i-1, i])
-            elif re.search(r'#+\w+', bert_tok):
-                ids_to_rejoin.append(i)
-            if re.search(r"'", bert_tok) and (re.search(r'what|who|why|where|how', bert_toks[i-1])):
-                if i < len(bert_toks)-1:
-                    ids_to_rejoin.append(i+1)
-            elif re.search(r"-|/|'", bert_tok) and not (re.search(r'what|who|why|where|how', bert_toks[i-1])):
-                ids_to_rejoin.append(i)
-                if i < len(bert_toks)-1:
-                    ids_to_rejoin.append(i+1)
-    
-    if len(ids_to_rejoin) > 0:
-        chunk_ids = chunk_indexes(ids_to_rejoin)
-        if len(bert_embeddings) > 0:
-            new_ids, new_toks, new_embeddings, new_id = retokenizer.retokenize(bert_toks, 
-                                                                               bert_ids, 
-                                                                               bert_embeddings,
-                                                                               chunk_ids,
-                                                                               arbitrary_id)
-            return new_ids, new_toks, new_embeddings, new_id
-        else:
-            
-            new_ids, new_toks, new_id = retokenizer.retokenize(bert_toks, 
-                                                               bert_ids, 
-                                                               bert_embeddings,
-                                                               chunk_ids,
-                                                               arbitrary_id)
-            return new_ids, new_toks, new_id
-    else:
-        if len(bert_embeddings) > 0:
-            return bert_ids, bert_toks, bert_embeddings, arbitrary_id
-        else:
-            return bert_ids, bert_toks, arbitrary_id
-
-## TODO: investigate how you can make this function work properly 
-## FOR NOW: just use token representations of last hidden layer (implemented in cell below)
+#TODO: investigate how you can make this function work properly 
+#FOR NOW: just use token representations of last hidden layer (implemented in cell below)
 def get_summed_embeddings(model, toks_ids, segment_ids):
     """
         Args: BertModel, token id tensors, segment id tensors
@@ -247,21 +85,21 @@ def get_summed_embeddings(model, toks_ids, segment_ids):
         token_embeddings[token_i] = torch.sum(torch.stack(hidden_layers[token_i])[-4:], 0).numpy()
     return token_embeddings
 
-def bert_token_ids(tok_questions, tok_ids, sql_data, arbitrary_id = 99999):
+def bert_token_ids(sql_data, bert_questions, bert_ids, arbitrary_id = 99999):
     rejoined_toks = list()
     rejoined_ids = list()
-    for i, (question, tok_q, tok_id) in enumerate(zip(sql_data, tok_questions, tok_ids)):
-        tok_id = list(tok_id[0].numpy())
-        new_ids, new_toks, new_id = merge_token_ids_embed(tok_q, tok_id, arbitrary_id, merge=None)
-        arbitrary_id = new_id  
+    retokenizer = Retokenizer(merge=None, embeddings=False)
+    for i, (question, bert_question, bert_id) in enumerate(zip(sql_data, bert_questions, bert_ids)):
+        bert_id = list(bert_id[0].numpy())
+        new_toks, new_ids, new_id = retokenizer.retokenize(question['question_tok'], bert_question[1:-1], bert_id[1:-1], arbitrary_id)
+        arbitrary_id = new_id
         rejoined_toks.append(new_toks)
         rejoined_ids.append(new_ids)
     return rejoined_toks, rejoined_ids
 
-def bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, merge, arbitrary_id = 99999,
-                    matrix = False, tensor = False):
+def bert_embeddings(bert_questions, bert_ids, segment_ids, sql_data, merge, arbitrary_id = 99999):
     """
-        Args: torch tensors of token ids and segment ids.
+        Args: WordPiece tokenized questions, torch tensors of token ids and segment ids and SQL data.
         Computation: load pre-trained BERT model (weights),
                      put the model in "evaluation" mode, meaning feed-forward operation.
                      "torch.no_grad()" deactivates the gradient calculations, 
@@ -270,44 +108,35 @@ def bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, merge, arbitr
                 to their corresponding BERT context embeddings (values).
     """
     #TODO: check what's necessary to ouput all hidden states
-    # model = BertModel.from_pretrained('bert-base-uncased',
+    #model = BertModel.from_pretrained('bert-base-uncased',
     #                              output_hidden_states=True,
     #                              output_attentions=True)
     
-    model = BertModel.from_pretrained('bert-base-uncased')
-    
+    model = BertModel.from_pretrained('bert-base-uncased')    
     model.eval()
     id2embed = dict()
     id2tok = dict()
-    #embeddings = list()
     rejoined_toks = list()
     rejoined_ids = list()
+    retokenizer = Retokenizer(merge=merge, embeddings=True)
     with torch.no_grad():
-        for i, (question, tok_q, tok_id, segment_id) in enumerate(zip(sql_data, tok_questions, tok_ids, segment_ids)):
-            tok_embeddings = model(tok_id, segment_id)[0][0]
+        for i, (question, bert_question, bert_id, segment_id) in enumerate(zip(sql_data, bert_questions, bert_ids, segment_ids)):
+            bert_embeddings = model(bert_id, segment_id)[0][0]
+            bert_embeddings = np.array(list(map(lambda embedding:embedding.numpy(), bert_embeddings)))
             
             #TODO: make "get_summed_embeddings" function work
             #token_embeddings = get_summed_embeddings(model, tok_id, segment_id)
             
-            #NOTE: only use lines below, if you'd like to create an embedding matrix (or tensor)
-            #if matrix:
-            #    if tensor:
-            #        embeddings.append(token_embeddings)
-            #    else:
-            #        for bert_embedding in token_embeddings:
-            #            embeddings.append(bert_embedding.numpy())
-            
-            tok_id = list(tok_id[0].numpy())
-            new_ids, new_toks, new_embeddings, new_id = merge_token_ids_embed(tok_q, 
-                                                                              tok_id, 
-                                                                              arbitrary_id,
-                                                                              merge = merge,
-                                                                              bert_embeddings = tok_embeddings)
+            bert_id = list(bert_id[0].numpy())
+            new_toks, new_ids, new_embeddings, new_id = retokenizer.retokenize(question['question_tok'], 
+                                                                               bert_question[1:-1], 
+                                                                               bert_id[1:-1], 
+                                                                               arbitrary_id,
+                                                                               bert_embeddings)
             arbitrary_id = new_id   
             try:
-                assert len(new_ids) == len(new_toks) == len(question['question_tok'])
+                assert len(new_ids) == len(new_toks) == len(new_embeddings) == len(question['question_tok'])
                 for tok_id, bert_tok, bert_embedding in zip(new_ids, new_toks, new_embeddings):
-                    #tok_i = tok_i.item()
                     if tok_id not in id2embed:
                         id2embed[tok_id] = bert_embedding
                     if tok_id not in id2tok:
@@ -339,8 +168,8 @@ def update_sql_data(sql_data):
                 BERT tokens were rejoined into TypeSQL's gold standard tokens and
                 hence are the same
     """
-    tok_questions, tok_ids, _, _ = bert_preprocessing(extract_questions(sql_data))
-    tok_questions, tok_ids = bert_token_ids(tok_questions, tok_ids, sql_data)
+    bert_questions, bert_ids, _, _ = bert_preprocessing(extract_questions(sql_data))
+    tok_questions, tok_ids = bert_token_ids(sql_data, bert_questions, bert_ids)
     idx_to_pop = list()
     n_original_questions = len(sql_data)
     print("Number of questions before computing BERT token representations:", n_original_questions)
@@ -379,7 +208,6 @@ def remove_nonequal_questions(sql_data):
 
 def reduce_dimensionality(id2embed, dims_to_keep=100):
     """
-    Dimensionality reduction of BERT embeddings performed through PCA.
         Args: id2embedding dict; number of dimensions to keep (of original 768 BERT embeddings)
         Return: id2embdding dict with reduced dimensionality embeddings specified by dims-to-keep 
     """
@@ -396,7 +224,7 @@ def reduce_dimensionality(id2embed, dims_to_keep=100):
     id2embed_reduced = {idx:embedding for idx, embedding in zip(ids, embeddings)}
     return id2embed_reduced
 
-def bert_pipeline(sql_data_train, sql_data_val, merge='avg'):
+def bert_pipeline(sql_data_train, sql_data_val, merge='max'):
     sql_data = concatenate_sql_data(sql_data_train, sql_data_val)
     tok_questions, tok_ids, segment_ids, _ = bert_preprocessing(extract_questions(sql_data))
     _, _, id2embed, id2tok = bert_embeddings(tok_questions, tok_ids, segment_ids, sql_data, merge)
@@ -409,23 +237,29 @@ def save_embeddings_as_json(id2tok, id2embed, merge, full=False):
     id2embed = {int(idx):embedding.tolist() for idx, embedding in id2embed.items()}
     id2tok = {int(idx):tok for idx, tok in id2tok.items()}
     if merge == 'max':
-        if full:
-            embeddings = 'id2embedMaxFull.json'
-        else:
-            embeddings = 'id2embedMax100.json'
-        ids = 'id2tokMax.json'
+        if dim == 'full':
+            embeddings = './bert/id2embedMaxFull.json'
+        elif dim == 600:
+            embeddings = './bert/id2embedMax600.json'
+        elif dim == 100:
+            embeddings = './bert/id2embedMax100.json'
+        ids = './bert/id2tokMax.json'
     elif merge == 'avg':
-        if full:
-            embeddings = 'id2embedMeanFull.json'
-        else:
-            embeddings = 'id2embedMean100.json'
-        ids = 'id2tokMean.json'
+        if dim == 'full':
+            embeddings = './bert/id2embedMeanFull.json'
+        elif dim == 600:
+            embeddings = './bert/id2embedMean600.json'
+        elif dim == 100:
+            embeddings = './bert/id2embedMean100.json'
+        ids = './bert/id2tokMean.json'
     elif merge == 'sum':
-        if full:
-            embeddings = 'id2embedSumFull.json'
-        else:
-            embeddings = 'id2embedSum100.json'
-        ids = 'id2tokSum.json' 
+        if dim == 'full':
+            embeddings = './bert/id2embedSumFull.json'
+        elif dim == 600:
+            embeddings = './bert/id2embedSum600.json'
+        elif dim == 100:
+            embeddings = './bert/id2embedSum100.json'
+        ids = './bert/id2tokSum.json' 
     else:
         raise Exception('Embeddings have to be max-pooled, averaged or summed')
     with open(embeddings, 'w') as json_file:
