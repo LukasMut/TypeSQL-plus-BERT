@@ -11,20 +11,29 @@ except ModuleNotFoundError:
     from typesql.model.modules.net_utils import run_lstm, col_name_encode
 
 class CondOpStrPredictor(nn.Module):
-    def __init__(self, N_word, N_h, N_depth, max_col_num, max_tok_num, gpu, db_content):
+    def __init__(self, N_word, N_h, N_depth, max_col_num, max_tok_num, gpu, db_content, types, POS):
         super(CondOpStrPredictor, self).__init__()
         self.N_h = N_h
         self.max_tok_num = max_tok_num
         self.max_col_num = max_col_num
         self.gpu = gpu
+        self.types = types
+        self.POS = POS
 
         if db_content == 0:
-            # OLD APPROACH (without rejoining into TypeSQL tokens) - maybe try (!)
-            # FOR BERT, we don't concatenate type and word embeddings anymore, but only use BERT embeddings
-            # that's why in_size has to be "N_word"
-            # in_size = N_word
             
-            in_size = N_word+int(N_word/2)
+            if types:
+                # with type embeddings concatentation
+                if POS:
+                    in_size = N_word+N_word
+                else:
+                    in_size = N_word+int(N_word/2)
+            else:
+                # without type embeddings concatenation
+                if POS:
+                    in_size = N_word+int(N_word/2)
+                else:
+                    in_size = N_word
         else:
             in_size = N_word+N_word
         self.cond_opstr_lstm = nn.LSTM(input_size=in_size, hidden_size=int(N_h/2),
@@ -47,10 +56,19 @@ class CondOpStrPredictor(nn.Module):
         self.cond_str_out_ht = nn.Linear(N_h, N_h)
         self.cond_str_out_col = nn.Linear(N_h, N_h)
         self.cond_str_out = nn.Sequential(nn.ReLU(), nn.Linear(N_h, 1))
+        
+        if self.POS:
+            self.cond_str_out_pos = nn.Linear(N_h, N_h)
+        
         if db_content == 0:
             self.cond_str_x_type = nn.Linear(int(N_word/2), N_h)
+            if self.POS:
+                self.cond_str_x_pos = nn.Linear(int(N_word/2), N_h)           
         else:
             self.cond_str_x_type = nn.Linear(N_word, N_h)
+            if self.POS:
+                self.cond_str_x_pos = nn.Linear(N_word, N_h)
+
 
         self.softmax = nn.Softmax() #dim=1
 
@@ -83,7 +101,7 @@ class CondOpStrPredictor(nn.Module):
 
 
     def forward(self, x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var,
-                gt_where, gt_cond, sel_cond_score=None):
+                gt_where, gt_cond, sel_cond_score=None, x_pos_emb_var=None):
         max_x_len = max(x_len)
         max_col_len = max(col_len)
         B = len(x_len)
@@ -101,11 +119,18 @@ class CondOpStrPredictor(nn.Module):
         else:
             chosen_col_gt = [ [x[0] for x in one_gt_cond] for one_gt_cond in gt_cond]
         
-        # OLD APPROACH (without rejoining into TypeSQL tokens) - maybe try (!)
-        # Check whether BERT embeddings alone are sufficient
-        # FOR BERT only use BERT embeddings (don't concatenate with type embeddings)  
-        # x_emb_concat = x_emb_var
-        x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
+        if self.types:
+            # with type embeddings concatentation
+            if self.POS:
+                x_emb_concat = torch.cat((x_emb_var, x_type_emb_var, x_pos_emb_var), 2)
+            else:
+                x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
+        else:
+            if self.POS:
+                x_emb_concat = torch.cat((x_emb_var, x_pos_emb_var), 2)
+            else:
+                x_emb_concat = x_emb_var
+        
         h_enc, _ = run_lstm(self.cond_opstr_lstm, x_emb_concat, x_len)
         e_col, _ = run_lstm(self.cond_name_enc, col_inp_var, col_len)
 
@@ -129,9 +154,13 @@ class CondOpStrPredictor(nn.Module):
         cond_op_score = self.cond_op_out(self.cond_op_out_K(K_cond_op) +
                 self.cond_op_out_col(col_emb)).squeeze()
 
-
         #Predict the string of conditions
-        xt_str_enc = self.cond_str_x_type(x_type_emb_var)
+        
+        if self.types:
+            xt_str_enc = self.cond_str_x_type(x_type_emb_var)
+        
+        if self.POS:
+            xpos_str_enc = self.cond_str_x_pos(x_pos_emb_var)
 
         col_emb = []
         for b in range(B):
@@ -148,35 +177,49 @@ class CondOpStrPredictor(nn.Module):
             g_str_s = g_str_s_flat.contiguous().view(B, 4, -1, self.N_h)
 
             h_ext = h_enc.unsqueeze(1).unsqueeze(1)
+            
             ## CHANGES ## - ## FOR BERT IMPLEMENTATION ##
             # for BERT, don't use hidden representation of type embeddings
             #           and comment out line below
-            ht_ext = xt_str_enc.unsqueeze(1).unsqueeze(1)
+            #
             g_ext = g_str_s.unsqueeze(3)
             col_ext = col_emb.unsqueeze(2).unsqueeze(2)
-            ## CHANGES ## - ## FOR BERT IMPLEMENTATION NO TYPES ##
-            # for BERT, don't use hidden representation of type embeddings
-            #cond_str_score = self.cond_str_out(
-            #        self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext)
-            #        + self.cond_str_out_col(col_ext)).squeeze()                
-            cond_str_score = self.cond_str_out(
+            
+            if self.types:
+                # with type embeddings concatenation
+                ht_ext = xt_str_enc.unsqueeze(1).unsqueeze(1)
+                
+                if self.POS:
+                    hpos_ext = xpos_str_enc.unsqueeze(1).unsqueeze(1)
+                    cond_str_score = self.cond_str_out(
                     self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext)
-                    + self.cond_str_out_col(col_ext) + self.cond_str_out_ht(ht_ext)).squeeze()
+                    + self.cond_str_out_col(col_ext) + self.cond_str_out_ht(ht_ext) + self.cond_str_out_pos(hpos_ext)).squeeze()
+                else:       
+                    cond_str_score = self.cond_str_out(
+                        self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext)
+                        + self.cond_str_out_col(col_ext) + self.cond_str_out_ht(ht_ext)).squeeze()
+            else:
+                # without type embeddings concatenation
+                if self.POS:
+                    hpos_ext = xpos_str_enc.unsqueeze(1).unsqueeze(1)
+                    cond_str_score = self.cond_str_out(self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext) + self.cond_str_out_col(col_ext) + self.cond_str_out_pos(hpos_ext)).squeeze()
+                else:
+                    cond_str_score = self.cond_str_out(
+                        self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext)
+                        + self.cond_str_out_col(col_ext)).squeeze()   
+
             for b, num in enumerate(x_len):
                 if num < max_x_len:
                     cond_str_score[b, :, :, num:] = -100
         else:
             h_ext = h_enc.unsqueeze(1).unsqueeze(1)
-            ## CHANGES ## - ## FOR BERT IMPLEMENTATION ##
-            # for BERT, don't use hidden representation of type embeddings
-            #           and comment out line below
-            ht_ext = xt_str_enc.unsqueeze(1).unsqueeze(1)
             col_ext = col_emb.unsqueeze(2).unsqueeze(2)
             scores = []
 
             t = 0
+            #TODO: maybe we should store BERT's [CLS] and [SEP] tokens somewhere?
             init_inp = np.zeros((B*4, 1, self.max_tok_num), dtype=np.float32)
-            init_inp[:,0,0] = 1  #Set the <BEG> token
+            init_inp[:,0,0] = 1  #Set the <BEG> token #TODO: for BERT rather [CLS] token?
             if self.gpu:
                 cur_inp = Variable(torch.from_numpy(init_inp).cuda())
             else:
@@ -190,14 +233,27 @@ class CondOpStrPredictor(nn.Module):
                 g_str_s = g_str_s_flat.view(B, 4, 1, self.N_h)
                 g_ext = g_str_s.unsqueeze(3)
                 
-                ## CHANGES ## - ## FOR BERT IMPLEMENTATION NO TYPES ##
-                # for BERT, don't use hidden representation of type embeddings
-                #cur_cond_str_score = self.cond_str_out(
-                #        self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext)
-                #        + self.cond_str_out_col(col_ext)).squeeze()                
-                cur_cond_str_score = self.cond_str_out(
+                if self.types:
+                    # with type embeddings concatenation
+                    ht_ext = xt_str_enc.unsqueeze(1).unsqueeze(1)
+                    
+                    if self.POS:
+                        hpos_ext = xpos_str_enc.unsqueeze(1).unsqueeze(1)
+                        cur_cond_str_score = self.cond_str_out(self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext) + self.cond_str_out_col(col_ext) + self.cond_str_out_ht(ht_ext) + self.cond_str_out_pos(hpos_ext)).squeeze()
+                    else:
+                        cur_cond_str_score = self.cond_str_out(
+                            self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext)
+                            + self.cond_str_out_col(col_ext) + self.cond_str_out_ht(ht_ext)).squeeze()                
+                else:
+                    # without type embeddings concatenation
+                    if self.POS:
+                        hpos_ext = xpos_str_enc.unsqueeze(1).unsqueeze(1)
+                        cur_cond_str_score = self.cond_str_out(self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext) + self.cond_str_out_col(col_ext) + self.cond_str_out_pos(hpos_ext)).squeeze()
+                    else: 
+                        cur_cond_str_score = self.cond_str_out(
                         self.cond_str_out_h(h_ext) + self.cond_str_out_g(g_ext)
-                        + self.cond_str_out_col(col_ext) + self.cond_str_out_ht(ht_ext)).squeeze()
+                        + self.cond_str_out_col(col_ext)).squeeze()
+
                 for b, num in enumerate(x_len):
                     if num < max_x_len:
                         cur_cond_str_score[b, :, num:] = -100

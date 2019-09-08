@@ -22,7 +22,7 @@ class WordEmbedding(nn.Module):
         else:
             # else use word2vec or glove
             _, _, self.word_emb = word_emb
-            print("Using fixed embedding for words but trainable embedding for types")
+            print("Using fixed embeddings for words but trainable embeddings for types and pos tags")
             if word_emb_bert is not None:
                 self.idx2word, self.word_emb_bert = word_emb_bert
                 print("Using BERT context embeddings for questions")
@@ -79,9 +79,6 @@ class WordEmbedding(nn.Module):
             elif not is_list and not BERT:
                 q_val = list(map(lambda x:self.word_emb.get(x, np.zeros(self.N_word, dtype=np.float32)), one_q))
             elif not is_list and BERT:
-                # OLD APPROACH (without rejoining into TypeSQL tokens)
-                # there is no need to have a backup zeros vector since BERT embeddings
-                # use WordPiece tokenization and should thus have embeddings for every (sub-)word
                 q_val = list(map(lambda x:self.word_emb_bert.get(x, np.zeros(self.N_word, dtype=np.float32)), one_q))
             else:
                 #print(one_q)
@@ -93,18 +90,12 @@ class WordEmbedding(nn.Module):
                         for w in ws:
                             
                             if BERT:
-                            # OLD APPROACH (without rejoining into TypeSQL tokens)
-                            # there is no need to have a backup zeros vector since BERT embeddings
-                            # use WordPiece tokenization and should thus have embeddings for every (sub-)word
                                 emb_list.append(self.word_emb_bert.get(w, np.zeros(self.N_word, dtype=np.float32)))
                             else:
                                 emb_list.append(self.word_emb.get(w, np.zeros(self.N_word, dtype=np.float32)))
                                 
                     elif ws_len == 1:
                         if BERT:
-                        # OLD APPROACH (without rejoining into TypeSQL tokens)
-                        # there is no need to have a backup zeros vector since BERT embeddings
-                        # use WordPiece tokenization and should thus have embeddings for every (sub-)word
                             emb_list.append(self.word_emb_bert.get(ws[0], np.zeros(self.N_word, dtype=np.float32)))
                         else:
                             emb_list.append(self.word_emb.get(ws[0], np.zeros(self.N_word, dtype=np.float32)))
@@ -123,10 +114,6 @@ class WordEmbedding(nn.Module):
             elif not is_list or is_q: # for old approach: elif not BERT and (not is_list or is_q)
                 val_embs.append([np.zeros(self.N_word, dtype=np.float32)] + q_val + [np.zeros(self.N_word, dtype=np.float32)])  #<BEG> and <END>
                 val_len[i] = 1 + len(q_val) + 1
-            #elif BERT and (not is_list or is_q):
-            #    # OLD APPROACH (without rejoining into TypeSQL tokens)
-            #    val_embs.append(q_val) # not need to append <BEG> and <END> as [CLS] and [SEP] are included
-            #    val_len[i] = len(q_val)
             else:
                 val_embs.append(q_val)
                 val_len[i] = len(q_val)
@@ -174,8 +161,6 @@ class WordEmbedding(nn.Module):
         for b in range(B):
             if self.trainable:
                 ct_val = list(map(lambda x:self.w2i.get(x, 0), agg_ops))
-            elif self.word_emb_bert:   
-                ct_val = list(map(lambda x:self.word_emb_bert.get(x, np.zeros(self.N_word, dtype=np.float32)), agg_ops))
             else:
                 ct_val = list(map(lambda x:self.word_emb.get(x, np.zeros(self.N_word, dtype=np.float32)), agg_ops))
             ret.append(ct_val)

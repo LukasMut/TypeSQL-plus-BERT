@@ -11,20 +11,31 @@ except ModuleNotFoundError:
     from typesql.model.modules.net_utils import run_lstm, col_name_encode
 
 class SelCondPredictor(nn.Module):
-    def __init__(self, N_word, N_h, N_depth, gpu, db_content):
+    def __init__(self, N_word, N_h, N_depth, gpu, db_content, types, POS):
         super(SelCondPredictor, self).__init__()
         self.N_h = N_h
         self.gpu = gpu
+        self.types = types
+        self.POS = POS
 
         if db_content == 0:
-            # OLD APPROACH (without rejoining into TypeSQL tokens)
-            # FOR BERT, we don't concatenate type and word embeddings anymore, but only use BERT embeddings
-            # that's why in_size has to be "N_word"
-            # in_size = N_word
             
-            in_size = N_word+int(N_word/2)
+            if types:
+                # with type embeddings concatentation
+                if POS:
+                    in_size = N_word+N_word
+                else:
+                    in_size = N_word+int(N_word/2)
+            else:
+                # without type embeddings concatenation
+                if POS:
+                    in_size = N_word+int(N_word/2)
+                else:
+                    in_size = N_word
+            
         else:
             in_size = N_word+N_word
+            
         self.selcond_lstm = nn.LSTM(input_size=in_size, hidden_size=int(N_h/2),
                 num_layers=N_depth, batch_first=True,
                 dropout=0.3, bidirectional=True)
@@ -50,17 +61,24 @@ class SelCondPredictor(nn.Module):
         self.softmax = nn.Softmax() #dim=1
 
 
-    def forward(self, x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel):
+    def forward(self, x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel, x_pos_emb_var=None):
         max_x_len = max(x_len)
         max_col_len = max(col_len)
         B = len(x_len)
         #Predict the selection condition
         
-        # OLD APPROACH (without rejoining into TypeSQL tokens)
-        # Check whether BERT embeddings alone are sufficient
-        # FOR BERT implementation, don't concatenate word with type embeddings
-        # x_emb_concat = x_emb_var
-        x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
+        if self.types:
+            # with type embeddings concatentation
+            if self.POS:
+                x_emb_concat = torch.cat((x_emb_var, x_type_emb_var, x_pos_emb_var), 2)
+            else:
+                x_emb_concat = torch.cat((x_emb_var, x_type_emb_var), 2)
+        else:
+            if self.POS:
+                x_emb_concat = torch.cat((x_emb_var, x_pos_emb_var), 2)
+            else:
+                x_emb_concat = x_emb_var
+            
         e_col, _ = run_lstm(self.selcond_name_enc, col_inp_var, col_len)
         h_enc, _ = run_lstm(self.selcond_lstm, x_emb_concat, x_len)
 

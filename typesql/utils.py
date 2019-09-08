@@ -62,23 +62,37 @@ def best_model_name(args, for_load=False):
         use_emb = ''
     else:
         use_emb = '_train_emb' if args.train_emb else ''
-
-    agg_model_name = args.sd + '/%s_%s%s.agg_model'%(new_data,
+    
+    agg_model_name_1 = args.sd_1 + '/%s_%s%s.agg_model'%(new_data,
             mode, use_emb)
-    sel_model_name = args.sd + '/%s_%s%s.sel_model'%(new_data,
+    sel_model_name_1 = args.sd_1 + '/%s_%s%s.sel_model'%(new_data,
             mode, use_emb)
-    cond_model_name = args.sd + '/%s_%s%s.cond_model'%(new_data,
+    cond_model_name_1 = args.sd_1 + '/%s_%s%s.cond_model'%(new_data,
             mode, use_emb)
 
-    agg_embed_name = args.sd + '/%s_%s%s.agg_embed'%(new_data, mode, use_emb)
-    sel_embed_name = args.sd + '/%s_%s%s.sel_embed'%(new_data, mode, use_emb)
-    cond_embed_name = args.sd + '/%s_%s%s.cond_embed'%(new_data, mode, use_emb)
+    agg_embed_name_1 = args.sd_1 + '/%s_%s%s.agg_embed'%(new_data, mode, use_emb)
+    sel_embed_name_1 = args.sd_1 + '/%s_%s%s.sel_embed'%(new_data, mode, use_emb)
+    cond_embed_name_1 = args.sd_1 + '/%s_%s%s.cond_embed'%(new_data, mode, use_emb)
+    
+    if args.ensemble != 'single':
+        agg_model_name_2 = args.sd_2 + '/%s_%s%s.agg_model'%(new_data,mode, use_emb)
+        sel_model_name_2 = args.sd_2 + '/%s_%s%s.sel_model'%(new_data,mode, use_emb)
+        cond_model_name_2 = args.sd_2 + '/%s_%s%s.cond_model'%(new_data,mode, use_emb)
+        agg_embed_name_2 = args.sd_2 + '/%s_%s%s.agg_embed'%(new_data, mode, use_emb)
+        sel_embed_name_2 = args.sd_2 + '/%s_%s%s.sel_embed'%(new_data, mode, use_emb)
+        cond_embed_name_2 = args.sd_2 + '/%s_%s%s.cond_embed'%(new_data, mode, use_emb)
+    
+    if args.ensemble == 'single':
+        return agg_model_name_1, sel_model_name_1, cond_model_name_1,\
+           agg_embed_name_1, sel_embed_name_1, cond_embed_name_1
+    else:
+        return agg_model_name_1, sel_model_name_1, cond_model_name_1,\
+           agg_embed_name_1, sel_embed_name_1, cond_embed_name_1, \
+        agg_model_name_2, sel_model_name_2, cond_model_name_2, \
+        agg_embed_name_2, sel_embed_name_2, cond_embed_name_2
 
-    return agg_model_name, sel_model_name, cond_model_name,\
-           agg_embed_name, sel_embed_name, cond_embed_name
 
-
-def to_batch_seq(sql_data, table_data, idxes, st, ed, db_content=0, ret_vis_data=False, BERT=False):
+def to_batch_seq(sql_data, table_data, idxes, st, ed, db_content=0, ret_vis_data=False, BERT=False, POS=False):
     q_seq = []
     q_seq_id = []
     q_seq_tok = []
@@ -90,6 +104,8 @@ def to_batch_seq(sql_data, table_data, idxes, st, ed, db_content=0, ret_vis_data
     vis_seq = []
     q_type = []
     col_type = []
+    if POS:
+        q_pos = []
     for i in range(st, ed):
         sql = sql_data[idxes[i]]
         if db_content == 0:
@@ -99,12 +115,16 @@ def to_batch_seq(sql_data, table_data, idxes, st, ed, db_content=0, ret_vis_data
             else:
                 q_seq.append([[x] for x in sql['question_tok']])
             q_type.append([[x] for x in sql["question_type_org_kgcol"]])
+            if POS:
+                q_pos.append([[x] for x in sql['question_tok_pos']])
         else:
             if BERT:
                 q_seq_id.append([[x] for x in sql['bert_token_ids']])
-                q_seq_tok.append([[x] for x in sql['question_tok_concol']])
+                q_seq_tok.append(sql['question_tok_concol'])
             else:
                 q_seq.append(sql['question_tok_concol'])
+            if POS:
+                q_pos.append(sql['question_tok_concol_pos'])
             q_type.append(sql["question_type_concol_list"])
         col_type.append(table_data[sql['table_id']]['header_type_kg'])
         col_seq.append(table_data[sql['table_id']]['header_tok'])
@@ -121,11 +141,17 @@ def to_batch_seq(sql_data, table_data, idxes, st, ed, db_content=0, ret_vis_data
     if ret_vis_data:
         if BERT: 
             q_seq = list(map(lambda id_tok:(id_tok[0], id_tok[1]), zip(q_seq_id, q_seq_tok)))
-        return q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type, vis_seq
+        if POS:
+            return q_pos, q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type, vis_seq
+        else:
+            return q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type, vis_seq
     else:
         if BERT:
             q_seq = list(map(lambda id_tok:(id_tok[0], id_tok[1]), zip(q_seq_id, q_seq_tok)))
-        return q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type
+        if POS:
+            return q_pos, q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type
+        else:
+            return q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type
 
 def to_batch_query(sql_data, idxes, st, ed):
     query_gt = []
@@ -136,98 +162,289 @@ def to_batch_query(sql_data, idxes, st, ed):
     return query_gt, table_ids
 
 
-def epoch_train(model, optimizer, batch_size, sql_data, table_data, pred_entry, db_content, BERT = False):
-    model.train()
+def epoch_train(models, optimizer, batch_size, sql_data, table_data, pred_entry, db_content, BERT=False,
+                POS=False, ensemble='single'):
+    
+    if len(models) > 1:
+        models_train = list()
+        for nn in models:
+            models_train.append(nn.train())
+    else:
+        model = models[0]
+        model.train()
+        
     perm=np.random.permutation(len(sql_data))
     cum_loss = 0.0
     st = 0
     while st < len(sql_data):
         ed = st+batch_size if st+batch_size < len(perm) else len(perm)
-
-        q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type = \
-                to_batch_seq(sql_data, table_data, perm, st, ed, db_content, BERT = BERT)
-        gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq, BERT = BERT)
+        
+        if ensemble == 'mixed':
+            if POS:
+                q_pos, q_seq_bert, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type = \
+                        to_batch_seq(sql_data, table_data, perm, st, ed, db_content, BERT = BERT, POS = POS)
+                q_pos, q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type = \
+                        to_batch_seq(sql_data, table_data, perm, st, ed, db_content, BERT = False, POS = POS)
+            else:
+                q_seq_bert, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type = \
+                        to_batch_seq(sql_data, table_data, perm, st, ed, db_content, BERT = BERT, POS = POS)
+                q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type = \
+                        to_batch_seq(sql_data, table_data, perm, st, ed, db_content, BERT = False, POS = POS)
+        else:
+            if POS:
+                 q_pos, q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type = \
+                    to_batch_seq(sql_data, table_data, perm, st, ed, db_content, BERT = BERT, POS = POS)
+            else:
+                 q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type = \
+                    to_batch_seq(sql_data, table_data, perm, st, ed, db_content, BERT = BERT, POS = POS)
+            
         gt_sel_seq = [x[1] for x in ans_seq]
         gt_agg_seq = [x[0] for x in ans_seq]
-        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
-                gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq)
-        loss = model.loss(score, ans_seq, pred_entry, gt_where_seq)
-        cum_loss += loss.data.cpu().numpy()*(ed - st) # or just loss.item()*(ed - st)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        
+        # if ensemble
+        if len(models) > 1:
+            losses = list()
+            for i, (model, optim) in enumerate(zip(models_train, optimizer)):
+                if ensemble == 'mixed':
+                    if i == 0:
+                        gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
+                        if POS:
+                            score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
+                                    gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq, q_pos=q_pos)
+                        else:
+                            score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
+                                    gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq)      
+                    else:
+                        gt_where_seq = model.generate_gt_where_seq(q_seq_bert, col_seq, query_seq)
+                        if POS:
+                            score = model.forward(q_seq_bert, col_seq, col_num, q_type, col_type, pred_entry,
+                                    gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq, q_pos=q_pos)
+                        else:
+                            score = model.forward(q_seq_bert, col_seq, col_num, q_type, col_type,
+                                    pred_entry, gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq)
+                else:
+                    gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
+                    if POS:
+                        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
+                                gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq, q_pos=q_pos)
+                    else:
+                        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
+                                gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq)
+                loss = model.loss(score, ans_seq, pred_entry, gt_where_seq)
+                losses.append(loss)
+                optim.zero_grad()
+                loss.backward()
+                optim.step()
+            cum_loss += np.mean([loss.data.cpu().numpy() for loss in losses])*(ed-st)
+        else:
+            gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
+            if POS:
+                score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
+                        gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq, q_pos=q_pos)
+            else:
+                score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry,
+                        gt_where=gt_where_seq, gt_cond=gt_cond_seq, gt_sel=gt_sel_seq)             
+            loss = model.loss(score, ans_seq, pred_entry, gt_where_seq)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            cum_loss += loss.data.cpu().numpy()*(ed - st)  # or just loss.item()*(ed - st)
 
         st = ed
 
     return cum_loss / len(sql_data)
 
 
-def epoch_exec_acc(model, batch_size, sql_data, table_data, db_path, db_content):
+def epoch_exec_acc(models, batch_size, sql_data, table_data, db_path, db_content, BERT=False, POS=False, ensemble='single'):
     engine = DBEngine(db_path)
-    model.eval()
+    
+    if len(models) > 1:
+        models_eval = list()
+        for nn in models:
+            nn.eval()
+            models_eval.append(nn)
+    else:
+        model = models[0]
+        model.eval()    
+
     perm = list(range(len(sql_data)))
     tot_acc_num = 0.0
     acc_of_log = 0.0
     st = 0
+    
     while st < len(sql_data):
         ed = st+batch_size if st+batch_size < len(perm) else len(perm)
-        q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type, raw_data = \
-            to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True)
+        
+        if ensemble == 'mixed':
+            if POS:
+                q_pos, q_seq_bert, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+                raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=BERT, POS=POS)
+                q_pos, q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=False, POS=POS)
+            else:
+                q_seq_bert, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+                raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=BERT, POS=POS)
+                q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=False, POS=POS)  
+        else:
+            if POS:
+                q_pos, q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=BERT, POS=POS)
+            else:
+                q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=BERT, POS=POS)
+      
+        
         raw_q_seq = [x[0] for x in raw_data]
         raw_col_seq = [x[1] for x in raw_data]
-        # uncomment line below for BERT implementation
-        gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq, BERT = True)
-        #gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
         query_gt, table_ids = to_batch_query(sql_data, perm, st, ed)
         gt_sel_seq = [x[1] for x in ans_seq]
         gt_agg_seq = [x[0] for x in ans_seq]
-        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True))
-        #pred_queries = model.gen_query(score, q_seq, col_seq,
-        #        raw_q_seq, raw_col_seq, (True, True, True))
-        # uncomment line below for BERT implementation
-        pred_queries = model.gen_query(score, q_seq, col_seq,
-                raw_q_seq, raw_col_seq, (True, True, True), BERT = True)
-
-        for idx, (sql_gt, sql_pred, tid) in enumerate(
-                zip(query_gt, pred_queries, table_ids)):
-            ret_gt = engine.execute(tid, sql_gt['sel'], sql_gt['agg'], sql_gt['conds'])
-            try:
-                ret_pred = engine.execute(tid, sql_pred['sel'], sql_pred['agg'], sql_pred['conds'])
-            except:
-                ret_pred = None
-            tot_acc_num += (ret_gt == ret_pred)
-
+        
+        if len(models) > 1:
+            scores = list()
+            for i, model in enumerate(models_eval):
+                
+                if ensemble == 'mixed':
+                    if i == 0:
+                        gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
+                        if POS:
+                            score = model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True), q_pos=q_pos)
+                        else:
+                            score = model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True))
+                    else:
+                        gt_where_seq = model.generate_gt_where_seq(q_seq_bert, col_seq, query_seq)
+                        if POS:
+                            score = model.forward(q_seq_bert, col_seq, col_num, q_type, col_type, (True, True, True), q_pos=q_pos)
+                        else:
+                            score = model.forward(q_seq_bert, col_seq, col_num, q_type, col_type, (True, True, True))
+                else:
+                    gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
+                    if POS:
+                        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True), q_pos=q_pos)
+                    else:
+                        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True))
+            scores.append(score)
+            model = models_eval[0]    
+            pred_queries = model.gen_query(scores, q_seq, col_seq,
+                    raw_q_seq, raw_col_seq, (True, True, True))
+            for idx, (sql_gt, sql_pred, tid) in enumerate(
+                    zip(query_gt, pred_queries, table_ids)):
+                ret_gt = engine.execute(tid, sql_gt['sel'], sql_gt['agg'], sql_gt['conds'])
+                try:
+                    ret_pred = engine.execute(tid, sql_pred['sel'], sql_pred['agg'], sql_pred['conds'])
+                except:
+                    ret_pred = None
+                tot_acc_num += (ret_gt == ret_pred)
+        else:
+            gt_where_seq = model.generate_gt_where_seq(q_seq, col_seq, query_seq)
+            if POS:
+                score = [model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True), q_pos=q_pos)]
+            else:
+                score = [model.forward(q_seq, col_seq, col_num, q_type, col_type, (True, True, True))]
+            pred_queries = model.gen_query(score, q_seq, col_seq,
+                    raw_q_seq, raw_col_seq, (True, True, True))
+            for idx, (sql_gt, sql_pred, tid) in enumerate(
+                    zip(query_gt, pred_queries, table_ids)):
+                ret_gt = engine.execute(tid, sql_gt['sel'], sql_gt['agg'], sql_gt['conds'])
+                try:
+                    ret_pred = engine.execute(tid, sql_pred['sel'], sql_pred['agg'], sql_pred['conds'])
+                except:
+                    ret_pred = None
+                tot_acc_num += (ret_gt == ret_pred)
+        
         st = ed
-
+        
+     
     return tot_acc_num / len(sql_data)
 
 
-def epoch_acc(model, batch_size, sql_data, table_data, pred_entry, db_content, error_print=False, BERT = False):
-    model.eval()
+def epoch_acc(models, batch_size, sql_data, table_data, pred_entry, db_content, error_print=False, BERT=False, POS=False, ensemble='single'):
+    
+    if len(models) > 1:
+        models_eval = list()
+        for nn in models:
+            nn.eval()
+            models_eval.append(nn)
+    else:
+        model = models[0]
+        model.eval()    
+
     perm = list(range(len(sql_data)))
     st = 0
     one_acc_num = 0.0
     tot_acc_num = 0.0
+    
     while st < len(sql_data):
         ed = st+batch_size if st+batch_size < len(perm) else len(perm)
-
-        q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
-        raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT = BERT)
+                 
+        if ensemble == 'mixed':
+            if POS:
+                q_pos, q_seq_bert, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+                raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=BERT, POS=POS)
+                q_pos, q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=False, POS=POS)
+            else:
+                q_seq_bert, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+                raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=BERT, POS=POS)
+                q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=False, POS=POS)  
+        else:
+            if POS:
+                q_pos, q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=BERT, POS=POS)
+            else:
+                q_seq, col_seq, col_num, ans_seq, query_seq, gt_cond_seq, q_type, col_type,\
+            raw_data = to_batch_seq(sql_data, table_data, perm, st, ed, db_content, ret_vis_data=True, BERT=BERT, POS=POS)
+        
         raw_q_seq = [x[0] for x in raw_data]
         raw_col_seq = [x[1] for x in raw_data]
         query_gt, table_ids = to_batch_query(sql_data, perm, st, ed)
         gt_sel_seq = [x[1] for x in ans_seq]
-        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry)
-        pred_queries = model.gen_query(score, q_seq, col_seq,
-                raw_q_seq, raw_col_seq, pred_entry, BERT = BERT)
-        one_err, tot_err = model.check_acc(raw_data, pred_queries, query_gt, pred_entry, error_print)
-
-        one_acc_num += (ed-st-one_err)
-        tot_acc_num += (ed-st-tot_err)
+        
+        if len(models) > 1:
+            scores = list()
+            for i, model in enumerate(models_eval):
+                
+                if ensemble == 'mixed':
+                    if i == 0:
+                        if POS:
+                            score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry, q_pos=q_pos)
+                        else:
+                            score = model.forward(q_seq, col_seq, col_num, q_type, col_type,pred_entry)
+                    else:
+                        if POS:
+                            score = model.forward(q_seq_bert, col_seq, col_num, q_type, col_type,pred_entry, q_pos=q_pos)
+                        else:
+                            score = model.forward(q_seq_bert, col_seq, col_num, q_type, col_type, pred_entry)
+                else:
+                    if POS:
+                        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry, q_pos=q_pos)
+                    else:
+                        score = model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry)
+                scores.append(score)
+            model = models_eval[0]
+            pred_queries = model.gen_query(scores, q_seq, col_seq,
+                raw_q_seq, raw_col_seq, pred_entry)
+            one_err, tot_err = model.check_acc(raw_data, pred_queries, query_gt, pred_entry, error_print)
+            one_acc_num += (ed-st-one_err)
+            tot_acc_num += (ed-st-tot_err)
+                
+        else:
+            if POS:
+                score = [model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry, q_pos=q_pos)]
+            else:
+                score = [model.forward(q_seq, col_seq, col_num, q_type, col_type, pred_entry)]
+            pred_queries = model.gen_query(score, q_seq, col_seq,
+                raw_q_seq, raw_col_seq, pred_entry)
+            one_err, tot_err = model.check_acc(raw_data, pred_queries, query_gt, pred_entry, error_print)
+            one_acc_num += (ed-st-one_err)
+            tot_acc_num += (ed-st-tot_err)
 
         st = ed
+        
+ 
     return tot_acc_num / len(sql_data), one_acc_num / len(sql_data)
-
 
 def load_para_wemb(file_name):
     f = io.open(file_name, 'r', encoding='utf-8')

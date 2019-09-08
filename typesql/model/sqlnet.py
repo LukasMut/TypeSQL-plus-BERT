@@ -21,10 +21,12 @@ except ModuleNotFoundError:
 
 class SQLNet(nn.Module): # inheriting from parent class nn.Module
     def __init__(self, word_emb, N_word, N_h=120, N_depth=2,
-            gpu=False, trainable_emb=False, db_content=0, word_emb_bert=None, BERT=False):
-        super(SQLNet, self).__init__() # use init method from parent class
+            gpu=False, trainable_emb=False, db_content=0, word_emb_bert=None, BERT=False, types=False, POS=False):
+        super(SQLNet, self).__init__() # use init method from parent class (i.e., nn.Module)
         self.trainable_emb = trainable_emb
         self.db_content = db_content
+        self.BERT = BERT
+        self.types = types
 
         self.gpu = gpu
         self.N_h = N_h
@@ -36,6 +38,8 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                 'EQL', 'GT', 'LT', '<BEG>']
         self.COND_OPS = ['EQL', 'GT', 'LT']
         self.BERT = BERT
+        self.POS = POS
+        
         if word_emb_bert is not None:
             self.idx2word, self.word_emb_bert = word_emb_bert
             print("Using BERT context embeddings for questions")
@@ -52,6 +56,14 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                 self.SQL_TOK, trainable=is_train, word_emb_bert=word_emb_bert)
         self.cond_type_embed_layer = WordEmbedding(word_emb, N_word, gpu,
                 self.SQL_TOK, trainable=is_train, word_emb_bert=word_emb_bert)
+        
+        if self.POS:
+            self.agg_pos_embed_layer = WordEmbedding(word_emb, N_word, gpu,
+                    self.SQL_TOK, trainable=is_train)
+            self.sel_pos_embed_layer = WordEmbedding(word_emb, N_word, gpu,
+                    self.SQL_TOK, trainable=is_train)
+            self.cond_pos_embed_layer = WordEmbedding(word_emb, N_word, gpu,
+                    self.SQL_TOK, trainable=is_train)
 
         self.embed_layer = WordEmbedding(word_emb, N_word, gpu,
                 self.SQL_TOK, trainable=trainable_emb, word_emb_bert=word_emb_bert)
@@ -60,11 +72,11 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         self.agg_pred = AggPredictor(N_word, N_h, N_depth)
 
         #Predict select column + condition number and columns
-        self.selcond_pred = SelCondPredictor(N_word, N_h, N_depth, gpu, db_content)
+        self.selcond_pred = SelCondPredictor(N_word, N_h, N_depth, gpu, db_content, types, POS)
 
         #Predict condition operators and string values
         self.op_str_pred = CondOpStrPredictor(N_word, N_h, N_depth,
-                self.max_col_num, self.max_tok_num, gpu, db_content)
+                self.max_col_num, self.max_tok_num, gpu, db_content, types, POS)
 
         self.CE = nn.CrossEntropyLoss()
         self.softmax = nn.Softmax()
@@ -128,7 +140,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         return cur_seq
 
 
-    def generate_gt_where_seq(self, q, col, query, BERT=False):
+    def generate_gt_where_seq(self, q, col, query):
         """
         cur_seq is the indexes (in question toks) of string value in each where cond
         """
@@ -137,12 +149,10 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             cur_values = []
             st = cur_query.index(u'WHERE')+1 if \
                     u'WHERE' in cur_query else len(cur_query)
-            if BERT:
-                all_toks = [['<BEG>']] + cur_q[1] + [['<END>']] #[['<BEG>']] + [[self.idx2word[idx[0]]] for idx in cur_q[0]] + [['<END>']]
+            if self.BERT:
+                # all_toks = [['[CLS]']] + cur_q[1] + [['[SEP]']]
+                all_toks = [['<BEG>']] + cur_q[1] + [['<END>']]
             else:
-                # USE the line below, if you want to use BERT byte-pair encodings to generate sequence
-                # the upper if-clause will not work (as lengths don't align)
-                # all_toks = [['<BEG>']] + cur_q[1] + [['<END>']]
                 all_toks = [['<BEG>']] + cur_q + [['<END>']]
             while st < len(cur_query):
                 ed = len(cur_query) if 'AND' not in cur_query[st:]\
@@ -165,7 +175,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
 
 
     def forward(self, q, col, col_num, q_type, col_type, pred_entry,
-            gt_where = None, gt_cond=None, gt_sel=None):
+            gt_where = None, gt_cond=None, gt_sel=None, q_pos=None):
         B = len(q)
         pred_agg, pred_sel, pred_cond = pred_entry
 
@@ -173,17 +183,20 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         sel_cond_score = None
         cond_op_str_score = None
         
-        ## CHANGES
-        ## separate lists for q_ids and q_toks only needed for BERT implementation
-        q_ids = list(map(lambda id_tok:id_tok[0], q))
-        q_toks = list(map(lambda id_tok:id_tok[1], q))
+
+        if self.BERT:
+            q_ids = list(map(lambda id_tok:id_tok[0], q))
+            q_toks = list(map(lambda id_tok:id_tok[1], q))
 
         #Predict aggregator
         if self.trainable_emb:
                          
             if pred_agg:
-                x_emb_var, x_len = self.agg_embed_layer.gen_x_batch(q_ids, col, BERT=True)
-                #x_emb_var, x_len = self.agg_embed_layer.gen_x_batch(q, col)
+                if self.BERT:
+                    x_emb_var, x_len = self.agg_embed_layer.gen_x_batch(q_toks, col, BERT=False)
+                else:
+                    x_emb_var, x_len = self.agg_embed_layer.gen_x_batch(q, col, BERT=False)
+                
                 col_inp_var, col_name_len, col_len = \
                         self.agg_embed_layer.gen_col_batch(col)
                 max_x_len = max(x_len)
@@ -191,8 +204,11 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                         col_name_len, col_len, col_num, gt_sel=gt_sel)
 
             if pred_sel:
-                x_emb_var, x_len = self.sel_embed_layer.gen_x_batch(q_ids, col, BERT=True)
-                #x_emb_var, x_len = self.sel_embed_layer.gen_x_batch(q, col)
+                if self.BERT:
+                    x_emb_var, x_len = self.sel_embed_layer.gen_x_batch(q_ids, col, BERT=self.BERT)
+                else:
+                    x_emb_var, x_len = self.sel_embed_layer.gen_x_batch(q, col, BERT=self.BERT)
+                    
                 col_inp_var, col_name_len, col_len = \
                         self.sel_embed_layer.gen_col_batch(col)
                 max_x_len = max(x_len)
@@ -200,53 +216,100 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                         col_name_len, col_len, col_num)
 
             if pred_cond:
-                x_emb_var, x_len = self.cond_embed_layer.gen_x_batch(q_ids, col, BERT=True)
-                #x_emb_var, x_len = self.cond_embed_layer.gen_x_batch(q, col)
+                if self.BERT:
+                    x_emb_var, x_len = self.cond_embed_layer.gen_x_batch(q_ids, col, BERT=self.BERT)
+                else:
+                    x_emb_var, x_len = self.cond_embed_layer.gen_x_batch(q, col, BERT=self.BERT)
+                      
                 col_inp_var, col_name_len, col_len = \
                         self.cond_embed_layer.gen_col_batch(col)
                 max_x_len = max(x_len)
                 cond_score = self.cond_pred(x_emb_var, x_len, col_inp_var,
                         col_name_len, col_len, col_num,
                         gt_where, gt_cond)
+                
         elif self.db_content == 0:
-            x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=True)
-            #x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True)
-            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True)
-            agg_emb_var = self.embed_layer.gen_agg_batch(q_ids) # BERT
-            #agg_emb_var = self.embed_layer.gen_agg_batch(q)
+            if self.BERT:
+                # use BERT embeddings to represent questions
+                x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
+                # don't use BERT embeddings to predict aggregate value in SELECT clause
+                x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
+                # don't use BERT context embeddings to predict aggregate value in SELECT clause 
+                agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
+            else:
+                x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=self.BERT)
+                x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=False)
+                # don't use BERT context embeddings to predict aggregate value in SELECT clause 
+                agg_emb_var = self.embed_layer.gen_agg_batch(q)
+            
+            # don't use BERT context embeddings to represent columns (!)
+            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
+            
             max_x_len = max(x_len)
+            
             if pred_agg:
-                #x_type_agg_emb_var, _ = self.agg_type_embed_layer.gen_xc_type_batch(q_type, is_list=True)
-                agg_score = self.agg_pred(x_emb_var, x_len, agg_emb_var, col_inp_var, col_len)
+                #TODO: Try POS embeddings to predict aggregate 
+                agg_score = self.agg_pred(x_emb_var_agg, x_len_agg, agg_emb_var, col_inp_var, col_len)
 
             if pred_sel:
                 x_type_sel_emb_var, _ = self.sel_type_embed_layer.gen_xc_type_batch(q_type, is_list=True)
-                sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_sel_emb_var,
-                                               gt_sel)
+                
+                if self.POS:
+                    x_pos_sel_emb_var, _ = self.sel_pos_embed_layer.gen_xc_type_batch(q_pos, is_list=True)
+                    sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_sel_emb_var, gt_sel, x_pos_emb_var=x_pos_sel_emb_var)
+                else:
+                    sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_sel_emb_var, gt_sel)            
 
             if pred_cond:
                 x_type_cond_emb_var, _ = self.cond_type_embed_layer.gen_xc_type_batch(q_type, is_list=True)
-                cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_cond_emb_var,
-                                                     gt_where, gt_cond, sel_cond_score)
-
+                
+                if self.POS:
+                    x_pos_cond_emb_var, _ = self.cond_pos_embed_layer.gen_xc_type_batch(q_pos, is_list=True)
+                    cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_cond_emb_var, gt_where, gt_cond, sel_cond_score, x_pos_emb_var=x_pos_cond_emb_var)
+                else:
+                    cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_cond_emb_var, gt_where, gt_cond, sel_cond_score)
+                    
         else:
-            x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=True)
-            #x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True)
-            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True)
-            x_type_emb_var, x_type_len = self.embed_layer.gen_x_batch(q_type, col, is_list=True, is_q=True, BERT=False) # no BERT context embeddings for types
-            col_type_inp_var, col_type_len = self.embed_layer.gen_x_batch(col_type, col_type, is_list=True)
-            agg_emb_var = self.embed_layer.gen_agg_batch(q_ids)
-            #agg_emb_var = self.embed_layer.gen_agg_batch(q) # if not BERT
+            if self.BERT:
+            # use BERT embeddings to represent questions
+                x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
+                # don't use BERT embeddings to predict aggregate value in SELECT clause
+                x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
+                # don't use BERT context embeddings to predict aggregate value in SELECT clause (!)
+                agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
+            else:
+                x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=self.BERT)
+                # don't use BERT embeddings to predict aggregate value in SELECT clause
+                x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=False)
+                # don't use BERT context embeddings to predict aggregate value in SELECT clause (!)
+                agg_emb_var = self.embed_layer.gen_agg_batch(q)
+
+            # don't use BERT context embeddings to represent columns (!)            
+            col_inp_var, col_len = self.embed_layer.gen_x_batch(col, col, is_list=True, BERT=False)
+            
+            # no BERT context embeddings for types - there is no context to disentangle (!)
+            x_type_emb_var, x_type_len = self.embed_layer.gen_x_batch(q_type, col, is_list=True, is_q=True, BERT=False)
+            
+            col_type_inp_var, col_type_len = self.embed_layer.gen_x_batch(col_type, col_type, is_list=True, BERT=False) 
             max_x_len = max(x_len)
+            
+            if self.POS:
+                x_pos_emb_var, x_pos_len = self.embed_layer.gen_x_batch(q_pos, col, is_list=True, is_q=True)
+            
             if pred_agg:
-                agg_score = self.agg_pred(x_emb_var, x_len, agg_emb_var, col_inp_var, col_len)
+                agg_score = self.agg_pred(x_emb_var_agg, x_len_agg, agg_emb_var, col_inp_var, col_len)
 
             if pred_sel:
-                sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel)
-
+                if self.POS:
+                    sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel, x_pos_emb_var=x_pos_emb_var)
+                else:
+                    sel_cond_score = self.selcond_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_sel)
+                
             if pred_cond:
-                cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var,
-                                                    gt_where, gt_cond, sel_cond_score)
+                if self.POS:
+                    cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_where, gt_cond, sel_cond_score, x_pos_emb_var=x_pos_emb_var)
+                else:
+                    cond_op_str_score = self.op_str_pred(x_emb_var, x_len, col_inp_var, col_len, x_type_emb_var, gt_where, gt_cond, sel_cond_score)
 
         return (agg_score, sel_cond_score, cond_op_str_score)
 
@@ -429,7 +492,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
 
 
     def gen_query(self, score, q, col, raw_q, raw_col,
-            pred_entry, verbose=False, BERT=False):
+            pred_entry, verbose=False):
         def merge_tokens(tok_list, raw_tok_str):
             """
             tok_list: list of string words in current cond
@@ -470,16 +533,40 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                     ret = ret + ' '
                 ret = ret + tok
             return ret.strip()
-        ## CHANGES
-        ## separate lists for q_ids and q_toks only needed for BERT implementation
-        q_ids = list(map(lambda id_tok:id_tok[0], q))
-        q_toks = list(map(lambda id_tok:id_tok[1], q))
+
+        if self.BERT:
+            q_ids = list(map(lambda id_tok:id_tok[0], q))
+            q_toks = list(map(lambda id_tok:id_tok[1], q))
+            
         pred_agg, pred_sel, pred_cond = pred_entry
-        agg_score, sel_cond_score, cond_op_str_score = score
+        
+        if len(score) > 1:
+            agg_score_1, sel_cond_score_1, cond_op_str_score_1 = score[0]
+            agg_score_2, sel_cond_score_2, cond_op_str_score_2 = score[1]
+            
+            # soft voting ensemble computation (weighted averaging over the output(s) (scores) of the different models)
+            agg_score = torch.mean(torch.stack([agg_score_1, agg_score_2]),dim=0)
+            
+            cond_num_score_1, sel_score_1, cond_col_score_1 = [x.data.cpu().numpy() for x in sel_cond_score_1]
+            cond_num_score_2, sel_score_2, cond_col_score_2 = [x.data.cpu().numpy() for x in sel_cond_score_2]
+            
+            cond_num_score =  np.average((cond_num_score_1, cond_num_score_2),axis=0, weights=[2./3, 1./3]) #np.mean((cond_num_score_1, cond_num_score_2),axis=0)
+            sel_score = np.average((sel_score_1, sel_score_2),axis=0, weights=[2./3, 1./3]) #np.mean((sel_score_1, sel_score_2),axis=0)
+            cond_col_score = np.average((cond_col_score_1, cond_col_score_2),axis=0, weights=[2./3, 1./3])#np.mean((cond_col_score_1, cond_col_score_2),axis=0)
 
-        cond_num_score, sel_score, cond_col_score = [x.data.cpu().numpy() for x in sel_cond_score]
-        cond_op_score, cond_str_score = [x.data.cpu().numpy() for x in cond_op_str_score]
-
+            cond_op_score_1, cond_str_score_1 = [x.data.cpu().numpy() for x in cond_op_str_score_1]
+            cond_op_score_2, cond_str_score_2 = [x.data.cpu().numpy() for x in cond_op_str_score_2]
+            
+            #TODO: understand how the tensors "cond_op_score" and "cond_str_score" are represented;
+            #      maybe you have to average differently?
+            cond_op_score = np.average((cond_op_score_1, cond_op_score_2),axis=0, weights=[2./3, 1./3]) #np.mean((cond_op_score_1, cond_op_score_2),axis=0)
+            cond_str_score = np.average((cond_str_score_1, cond_str_score_2),axis=0, weights=[2./3, 1./3]) #np.mean((cond_str_score_1, cond_str_score_2),axis=0)
+            
+        else:
+            agg_score, sel_cond_score, cond_op_str_score = score[0]
+            cond_num_score, sel_score, cond_col_score = [x.data.cpu().numpy() for x in sel_cond_score]
+            cond_op_score, cond_str_score = [x.data.cpu().numpy() for x in cond_op_str_score]
+        
         ret_queries = []
         if pred_agg:
             B = len(agg_score)
@@ -497,11 +584,9 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                 cur_query['conds'] = []
                 cond_num = np.argmax(cond_num_score[b])
                 if self.BERT:
-                    ### CHANGES ###
+                    # maybe rather [['[CLS]']] + q_toks[b] + [['[SEP]']] ?
                     all_toks = [['<BEG>']] + q_toks[b] + [['<END>']] 
-                    #all_toks = [['<BEG>']] + [[self.idx2word[idx[0]]] for idx in q_ids[b]] + [['<END>']]
                 else:
-                    #all_toks = [['<BEG>']] + q_toks[b] + [['<END>']] #q_toks necessary for BERT implementation
                     all_toks = [['<BEG>']] + q[b] + [['<END>']]
                 max_idxes = np.argsort(-cond_col_score[b])[:cond_num]
                 for idx in range(cond_num):
