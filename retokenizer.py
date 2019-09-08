@@ -131,7 +131,10 @@ class Retokenizer:
                     for _ in range(len(indexes)):
                         bert_toks.pop(indexes[0])
                         bert_ids.pop(indexes[0])
-                        bert_embeddings = np.delete(bert_embeddings, indexes[0], axis=0)
+                        if self.embeddings:
+                            bert_embeddings = np.delete(bert_embeddings, indexes[0], axis=0)
+                        else:
+                            bert_embeddings.pop(indexes[0])
                     bert_toks.insert(indexes[0], rejoined_tok)
                     bert_ids.insert(indexes[0], arbitrary_id)
                     if self.embeddings:
