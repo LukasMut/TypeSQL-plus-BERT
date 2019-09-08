@@ -656,3 +656,15 @@ saved_model_kg_single/epoch80.sel_embed
 saved_model_kg_single/epoch80.sel_model
 saved_model_kg_single/epoch98.cond_embed
 saved_model_kg_single/epoch98.cond_model
+saved_model_kg_single/epoch37.sel_embed
+saved_model_kg_single/epoch37.sel_model
+saved_model_kg_single/epoch40.sel_embed
+saved_model_kg_single/epoch40.sel_model
+saved_model_kg_single/epoch51.sel_embed
+saved_model_kg_single/epoch51.sel_model
+saved_model_kg_single/epoch54.agg_embed
+saved_model_kg_single/epoch54.agg_model
+saved_model_kg_single/epoch55.cond_embed
+saved_model_kg_single/epoch55.cond_model
+saved_model_kg_single/epoch56.cond_embed
+saved_model_kg_single/epoch56.cond_model
