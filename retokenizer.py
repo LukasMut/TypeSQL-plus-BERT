@@ -7,18 +7,22 @@ class Retokenizer:
     
     def __init__(self, merge, embeddings: bool):
         """
-            Input: init method takes a string for specifing the merging computation of embeddings 
-            and a boolean value that indicates whether embeddings are passed or not.
+            Args: init method takes a string for specifing the merging computation of embeddings 
+                  and a boolean value that indicates whether embeddings are passed to the retokenizer.
         """
         self.merge = merge
-        # set embeddings to False to compute token rejoining step faster (for updating sql data)
+        #set embeddings to False to compute token rejoining step faster (for updating sql data)
         self.embeddings = embeddings
     
     def rejoin(self, bert_toks, i, typesql_tok):
+        """
+            Args: Tokens tokenized by Bert's WordPiece tokenizer, an index and TypeSQL tokenized tokens.
+            Return: Rejoined tokens and their corresponding indexes in the question.
+        """
         indexes=[]
         str_length=0
         for idx, bert_tok in enumerate(bert_toks[i:]):
-            bert_tok_str = bert_tok.strip('##') if re.search('#{2,}', bert_tok) else bert_tok
+            bert_tok_str = re.sub('#{2}','', bert_tok)
             try:
                 #TODO: fix Chinese and Japanese characters - this is a hack and not clean (we should not just join them)
                 if not re.match(typesql_tok, bert_tok) and self.is_cjk(bert_tok_str):
@@ -30,7 +34,7 @@ class Retokenizer:
             if not re.match(typesql_tok, bert_tok) and bert_tok_str == typesql_tok[str_length:str_length+len(bert_tok_str)]:
                 indexes.append(i+idx)
                 str_length += len(bert_tok_str)
-            #TODO: fix UNKs - this is a hack and not clean (we should not join UNKs)
+            #TODO: fix UNKs - this is a hack and not clean (we should not just join UNKs)
             elif not re.match(typesql_tok, bert_tok) and bert_tok == '[UNK]':
                 indexes.append(i+idx)
             else:
@@ -44,24 +48,22 @@ class Retokenizer:
 
     def retokenize(self, typesql_toks, bert_toks, bert_ids, arbitrary_id, bert_embeddings=None):
         """
-            Input: BERT tokens pre-processed according to WordPiece-Model, corresponding BERT ids,
-                   BERT context embeddings, indexes in token list to be rejoined, arbitrary id that 
-                   will be used instead of original BERT id for rejoined token, 
-                   string that denotes whether BERT context vectors should be summed or averaged after
-                   rejoining BERT tokens into TypeSQL tokens.
-            Output: Rejoined tokens, corresponding ids, BERT embeddings and new arbitrary id to start at
+            Args: TypeSQL tokens, tokens tokenized by Bert's WordPiece tokenizer, corresponding BERT ids,
+                  arbitrary id that will be used instead of original BERT id for (new) rejoined tokens, 
+                  BERT context embeddings.
+            Return: Rejoined tokens, corresponding ids, merged BERT embeddings and (new) arbitrary id to start the
                     next iteration. 
         """
         assert isinstance(arbitrary_id, int), 'token ids must be integers'
         if not self.embeddings:
             # create placeholder values for embeddings to compute loop over all arrays simultaneously
             bert_embeddings = [0 for _ in range(len(bert_toks))]
-            assert len(bert_toks) == len(bert_ids) == len(bert_embeddings), 'all arrays must have same number of elements'
+            assert len(bert_toks) == len(bert_ids) == len(bert_embeddings), 'all arrays must have the same number of elements'
         j = 0
         for i, (bert_tok, bert_id, bert_embedding) in enumerate(zip(bert_toks, bert_ids, bert_embeddings)):
             for typesql_tok in typesql_toks[j:]:
                 typesql_tok = typesql_tok.strip()
-                # remove all diacritics (since they are automatically removed by WordPiece tokenizer)
+                # remove all diacritics in TypeSQL tokens (since they are automatically removed by WordPiece tokenizer)
                 typesql_tok = self.remove_accents(typesql_tok)
                 # handle special regex tokens
                 if typesql_tok == '?':
@@ -94,7 +96,7 @@ class Retokenizer:
                     typesql_tok = '\['
                 elif typesql_tok == '\\':
                     typesql_tok = '\\' + typesql_tok
-                bert_tok = self.remove_accents(bert_tok) # necessary for cases such as cm³
+                bert_tok = self.remove_accents(bert_tok) # necessary for cases such as cm³ (to properly match strings)
                 try:
                     if re.match(typesql_tok, bert_tok):
                         j += 1
@@ -102,11 +104,12 @@ class Retokenizer:
                 except:
                     print("TypeSQL token:", typesql_tok)
                     print("BERT token:", bert_tok)
-                    raise Exception
+                    raise Exception('String matching did not work')
                 if not re.match(typesql_tok, bert_tok):
                     if not self.rejoin(bert_toks, i, typesql_tok):
-                        # rejoining did not work (most probably due to Tamil, Korean or Japanese characters
-                        #                         which cannot be handled by WordPiece tokenizer)
+                        #TODO: rejoining did not work (most probably due to Tamil, Korean or Japanese characters
+                        #                              which cannot be handled by WordPiece tokenizer 
+                        #                              -> either [UNK] or displayed with different accents)
                         if self.embeddings:
                             return bert_toks, bert_ids, bert_embeddings, arbitrary_id
                         else:
@@ -114,10 +117,10 @@ class Retokenizer:
                     rejoined_tok, indexes = self.rejoin(bert_toks, i, typesql_tok)
                     if self.embeddings:
                         if self.merge == 'sum':
-                            merged_embedding = np.sum(np.array([bert_embeddings[idx].numpy() for 
+                            merged_embedding = np.sum(np.array([bert_embeddings[idx] for 
                                                              idx in indexes]), axis=0)
                         elif self.merge == 'avg':
-                            merged_embedding = np.mean(np.array([bert_embeddings[idx].numpy() for 
+                            merged_embedding = np.mean(np.array([bert_embeddings[idx] for 
                                                              idx in indexes]), axis=0)
                         elif self.merge == 'max':
                             stacked_embeddings = np.vstack([bert_embeddings[idx] for 
@@ -182,5 +185,8 @@ class Retokenizer:
         return False
     
     def remove_accents(self, input_str):
+        """
+            Remove diacritics to compute string matching.
+        """
         nfkd_form = unicodedata.normalize('NFKD', str(input_str))
         return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
