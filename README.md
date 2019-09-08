@@ -72,6 +72,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 1. Test Model with knowledge graph types:
 ```
 python test.py
+
 --toy (use toy dataset)
 --sd_1 saved_model_kg_single (set model save directory for single model)
 --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
@@ -84,6 +85,7 @@ python test.py
 2. Test Model with knowledge graph types:
 ```
 python test.py
+
 --toy (use toy dataset)
 --sd_1 saved_model_con_single (load single model)
 --sd_2 saved_model_con_second (load second model, if ensemble computation)
