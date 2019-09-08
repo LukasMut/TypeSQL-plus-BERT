@@ -1,13 +1,13 @@
 Most of the code is based on [TypeSQL](https://github.com/taoyds/typesql) and [SQLNet](https://github.com/xiaojunxu/SQLNet). 
 Please cite both TypeSQL and SQLNet if you use this code.
 
-## TypeSQL with BERT ensemble
+## TypeSQL with BERT (ensemble)
 
-BERT byte-pair encoded tokens had to be rejoined into WikiSQL tokens as otherwise the SQL generation task will not work (due to BERT tokenizer's sub-word splitting). See files `retokenizer.py` and `bert_utils.py` for implementation.
+Tokens tokenized by BERT's WordPiece tokenizer had to be rejoined into WikiSQL tokens as otherwise the SQL generation task would not work (due to BERT tokenizer's sub-word splitting). See files `retokenizer.py` and `bert_utils.py` for implementation of the retokenization.
 
-Moreover, I extended TypeSQL's single model approach with an ensemble method (weighted averaging) - both TypeSQL nets are learning simultaneously (forward step and backprop are computed for both nets) but only one of the two will perform the final translation task (always the same network) given the averaged predictions of both sytems - to monitor dev performance of the ensemble. The respective best model of each member of the ensemble is saved in a separate folder to load for testing.
+Moreover, I extended TypeSQL's single model approach with an ensemble method (weighted averaging) - both TypeSQL nets are learning simultaneously (forward step and backprop are computed for both nets) but only one of the two performs the final translation task (always the same network) given the averaged predictions of both sytems - to monitor dev performance of the ensemble. The respective best model of each member of the ensemble is saved in a separate folder to load into memory for testing.
 
-## TypeSQL with POS ensemble
+## TypeSQL with POS (ensemble)
 
 Natural language questions were tagged using NLTK's POS tagger.  Ensemble of TypeSQL with POS embeddings.
 
@@ -39,6 +39,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 ```
   mkdir saved_model_kg_single (if ensemble, also: mkdir saved_model_kg_second)
   python train.py
+  
  --toy (use toy dataset for fast debugging)
  --sd_1 saved_model_kg_single (set model save directory for single model)
  --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
@@ -53,6 +54,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 ```
    mkdir saved_model_con_single (if ensemble, also: mkdir saved_model_con_second)
    python train.py
+   
   --toy (use toy dataset for fast debugging)
   --sd_1 saved_model_con_single (set model save directory for single model)
   --sd_2 saved_model_con_second (set save directory for second model, if ensemble computation)
@@ -70,27 +72,29 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 1. Test Model with knowledge graph types:
 ```
 python test.py
+
 --toy (use toy dataset)
 --sd_1 saved_model_kg_single (set model save directory for single model)
 --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
 --train_emb (Use trained word embeddings for SQLNet)
---BERT True (False, if you want to use GloVe)
---types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
+--BERT (Use Bert embeddings instead of GloVe)
+--types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
 --merged (use max-pooled, averaged or summed BERT embeddings)
---ensemble True (False, if you want to load single model)
+--ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
 2. Test Model with knowledge graph types:
 ```
 python test.py
+
 --toy (use toy dataset)
 --sd_1 saved_model_con_single (load single model)
 --sd_2 saved_model_con_second (load second model, if ensemble computation)
 --db_content 1
 --train_emb (Use trained word embeddings for SQLNet)
---BERT True (False, if you want to use GloVe)
---types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
+--BERT (Use Bert embeddings instead of GloVe)
+--types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
 --merged (use max-pooled, averaged or summed BERT embeddings)
---ensemble (False, if you want to load single model)
+--ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
 
 #### Get Data Types
@@ -103,9 +107,8 @@ python get_kg_entities.py [Google freebase API Key] [input json file] [output js
 3. Use detected knowledge graph entites and DB content to group questions and create type attributes in data files:
 ```
 python data_process_test.py --tok [output json file generated at step 2] --table TABLE_FILE --out OUTPUT_FILE [--data_dir DATA_DIRECTORY] [--out_dir OUTPUT_DIRECTORY]
-
-python data_process_train_dev.py --tok [output json file generated at step 2] --table TABLE_FILE --out OUTPUT_FILE [--data_dir DATA_DIRECTORY] [--out_dir OUTPUT_DIRECTORY]
 ```
+ 
 
 #### Acknowledgement
 
