@@ -103,10 +103,8 @@ python get_kg_entities.py [Google freebase API Key] [input json file] [output js
 3. Use detected knowledge graph entites and DB content to group questions and create type attributes in data files:
 ```
 python data_process_test.py --tok [output json file generated at step 2] --table TABLE_FILE --out OUTPUT_FILE [--data_dir DATA_DIRECTORY] [--out_dir OUTPUT_DIRECTORY]
-
-Neither do we use BERT embeddings to predict aggregate values in the SELECT clause nor to compute Type embeddings - as in both cases there is no context to disentangle. Thus, `GloVe` and `paraphrase` embeddings are crucial to TypeSQL, if one does want to use pre-trained embeddings.
+```
  
-3. Use the pre-trained BERT model ('uncased') from [Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers).
 
 #### Acknowledgement
 
