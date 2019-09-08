@@ -39,8 +39,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
 
-    #N_word=600 # BERT 600d, GloVe 300d, Para 300d --> TODO: change dimensionality of para embeddings in utils.py (!)
-    N_word=100 # BERT 100d, GloVe 50d, Para 50d
+    N_word=600 # BERT 600d, GloVe 300d, Para 300d --> TODO: change dimensionality of para embeddings in utils.py (!)
+    #N_word=100 # BERT 100d, GloVe 50d, Para 50d
     B_word=42
     if args.toy:
         USE_SMALL=True

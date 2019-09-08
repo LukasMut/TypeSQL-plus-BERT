@@ -511,8 +511,8 @@ def load_word_emb(file_name, load_used=False, use_small=False):
 def load_word_and_type_emb(fn1, fn2, sql_data, table_data, db_content, is_list=False, use_htype=False):
     word_to_idx = {'<UNK>':0, '<BEG>':1, '<END>':2}
     word_num = 3
-    # N_word = 300
-    N_word = 50
+    N_word = 300 #use 300d for BERT 600d to concatenate with GloVe 300d
+    #N_word = 50 #use 50d for BERT 100d to concatenate with GloVe 50d
     embs = [np.zeros(N_word, dtype=np.float32) for _ in range(word_num)]
     _, _, word_emb = load_concat_wemb(fn1, fn2)
 
