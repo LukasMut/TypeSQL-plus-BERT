@@ -597,7 +597,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                     for str_score in cond_str_score[b][idx]:
                         str_tok = np.argmax(str_score[:len(all_toks)])
                         str_val = all_toks[str_tok]
-                        if str_val == ['<END>']: #or str_val == ['[SEP]']:
+                        if str_val == ['<END>'] or str_val == ['[SEP]']:
                             break
                         #add string word/grouped words to current cond str tokens ["w1", "w2" ...]
                         cur_cond_str_toks.append(str_val)
