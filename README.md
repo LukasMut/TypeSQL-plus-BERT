@@ -39,6 +39,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 ```
   mkdir saved_model_kg_single (if ensemble, also: mkdir saved_model_kg_second)
   python train.py
+  
  --toy (use toy dataset for fast debugging)
  --sd_1 saved_model_kg_single (set model save directory for single model)
  --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
@@ -53,6 +54,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
 ```
    mkdir saved_model_con_single (if ensemble, also: mkdir saved_model_con_second)
    python train.py
+   
   --toy (use toy dataset for fast debugging)
   --sd_1 saved_model_con_single (set model save directory for single model)
   --sd_2 saved_model_con_second (set save directory for second model, if ensemble computation)
@@ -74,10 +76,10 @@ python test.py
 --sd_1 saved_model_kg_single (set model save directory for single model)
 --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
 --train_emb (Use trained word embeddings for SQLNet)
---BERT True (False, if you want to use GloVe)
---types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
+--BERT (Use Bert embeddings instead of GloVe)
+--types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
 --merged (use max-pooled, averaged or summed BERT embeddings)
---ensemble True (False, if you want to load single model)
+--ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
 2. Test Model with knowledge graph types:
 ```
@@ -87,10 +89,10 @@ python test.py
 --sd_2 saved_model_con_second (load second model, if ensemble computation)
 --db_content 1
 --train_emb (Use trained word embeddings for SQLNet)
---BERT True (False, if you want to use GloVe)
---types True (False, if you want to use BERT embeddings only - no concatenation with type embeddings)
+--BERT (Use Bert embeddings instead of GloVe)
+--types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
 --merged (use max-pooled, averaged or summed BERT embeddings)
---ensemble (False, if you want to load single model)
+--ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
 
 #### Get Data Types
