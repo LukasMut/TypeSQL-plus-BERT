@@ -455,9 +455,9 @@ def load_para_wemb(file_name):
     for (n,line) in enumerate(lines):
         info = line.strip().split(' ')
         if info[0].lower() not in ret:
-            # ret[info[0]] = np.array(map(lambda x:float(x), info[1:]))
-            # converting map into list is necessary as otherwise element of np.array is of type object
-            ret[info[0]] = np.array(list(map(lambda x:float(x), info[1:51])))
+            #NOTE: use 50d for BERT 100d model to concatenate with GloVe 50d
+            # ret[info[0]] = np.array(list(map(lambda x:float(x), info[1:51])))
+            ret[info[0]] = np.array(map(lambda x:float(x), info[1:]))
     return ret
 
 
