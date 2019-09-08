@@ -472,7 +472,10 @@ def load_comb_wemb(fn1, fn2):
 def load_concat_wemb(fn1, fn2):
     wemb1 = load_word_emb(fn1)
     wemb2 = load_para_wemb(fn2)
-    backup = np.zeros(50, dtype=np.float32)
+    
+    backup = np.zeros(300, dtype=np.float32) #use 300d for BERT 600d model to concatenate with GloVe 300d
+    #backup = np.zeros(50, dtype=np.float32) #use 50d for BERT 100d model to concatenate with GloVe 50d
+    
     # check whether shapes of word and para embeddings match (should have same dimensionality)
     assert next(iter(wemb1.values())).shape == next(iter(wemb2.values())).shape == backup.shape
     # if key is not found, return backup (zeros vector)
@@ -511,8 +514,8 @@ def load_word_emb(file_name, load_used=False, use_small=False):
 def load_word_and_type_emb(fn1, fn2, sql_data, table_data, db_content, is_list=False, use_htype=False):
     word_to_idx = {'<UNK>':0, '<BEG>':1, '<END>':2}
     word_num = 3
-    N_word = 300 #use 300d for BERT 600d to concatenate with GloVe 300d
-    #N_word = 50 #use 50d for BERT 100d to concatenate with GloVe 50d
+    N_word = 300 #use 300d for BERT 600d model to concatenate with GloVe 300d
+    #N_word = 50 #use 50d for BERT 100d model to concatenate with GloVe 50d
     embs = [np.zeros(N_word, dtype=np.float32) for _ in range(word_num)]
     _, _, word_emb = load_concat_wemb(fn1, fn2)
 
