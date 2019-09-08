@@ -111,9 +111,12 @@ class WordEmbedding(nn.Module):
             if self.trainable:
                 val_embs.append([1] + q_val + [2])  #<BEG> and <END>
                 val_len[i] = 1 + len(q_val) + 1
-            elif not is_list or is_q: # for old approach: elif not BERT and (not is_list or is_q)
-                val_embs.append([np.zeros(self.N_word, dtype=np.float32)] + q_val + [np.zeros(self.N_word, dtype=np.float32)])  #<BEG> and <END>
-                val_len[i] = 1 + len(q_val) + 1
+            elif not BERT and (not is_list or is_q):
+                val_embs.append([np.zeros(self.N_word, dtype=np.float32)] + q_val + [np.zeros(self.N_word, dtype=np.float32)])
+                val_len[i] = 1 + len(q_val) + 1  #<BEG> and <END>
+            elif BERT and (not is_list or is_q):
+                val_embs.append([self.word_emb_bert.get(101)] + q_val + [self.word_emb_bert.get(102)])
+                val_len[i] = 1 + len(q_val) + 1  #[CLS] and [SEP]
             else:
                 val_embs.append(q_val)
                 val_len[i] = len(q_val)

@@ -39,8 +39,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
 
-    N_word=600 # BERT 600d, GloVe 300d, Para 300d --> TODO: change dimensionality of para embeddings in utils.py (!)
-    #N_word=100 # BERT 100d, GloVe 50d, Para 50d
+    #N_word=600 # BERT 600d, GloVe 300d, Para 300d --> TODO: change dimensionality of para embeddings in utils.py (!)
+    N_word=100 # BERT 100d, GloVe 50d, Para 50d
     B_word=42
     if args.toy:
         USE_SMALL=True
@@ -63,11 +63,11 @@ if __name__ == '__main__':
     ## tokens pre-processed by BERT's WordPiece model and corresponding BERT ids
     if args.BERT:    
         sql_data_updated = update_sql_data(sql_data)
-        sql_data = remove_nonequal_questions(sql_data_updated)
+        #sql_data = remove_nonequal_questions(sql_data_updated)
         val_sql_data_updated = update_sql_data(val_sql_data)
-        val_sql_data = remove_nonequal_questions(val_sql_data_updated)
+        #val_sql_data = remove_nonequal_questions(val_sql_data_updated)
         test_sql_data_updated = update_sql_data(test_sql_data)
-        test_sql_data = remove_nonequal_questions(test_sql_data_updated)
+        #test_sql_data = remove_nonequal_questions(test_sql_data_updated)
         print("SQL data has been updated and now consists of bert-preprocessed tokens and corresponding IDs")
         print()
         print("Loading bert embeddings...")

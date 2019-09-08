@@ -97,14 +97,14 @@ class Retokenizer:
                 elif typesql_tok == '\\':
                     typesql_tok = '\\' + typesql_tok
                 bert_tok = self.remove_accents(bert_tok) # necessary for cases such as cm³ (to properly match strings)
-                try:
-                    if re.match(typesql_tok, bert_tok):
-                        j += 1
-                        break
-                except:
-                    print("TypeSQL token:", typesql_tok)
-                    print("BERT token:", bert_tok)
-                    raise Exception('String matching did not work')
+                #try:
+                if re.match(typesql_tok, bert_tok):
+                    j += 1
+                    break
+                #except:
+                #    print("TypeSQL token:", typesql_tok)
+                #    print("BERT token:", bert_tok)
+                #    raise Exception('String matching did not work')
                 if not re.match(typesql_tok, bert_tok):
                     if not self.rejoin(bert_toks, i, typesql_tok):
                         #TODO: rejoining did not work (most probably due to Tamil, Korean or Japanese characters
