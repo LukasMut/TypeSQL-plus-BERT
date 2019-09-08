@@ -1,13 +1,13 @@
 Most of the code is based on [TypeSQL](https://github.com/taoyds/typesql) and [SQLNet](https://github.com/xiaojunxu/SQLNet). 
 Please cite both TypeSQL and SQLNet if you use this code.
 
-## TypeSQL with BERT ensemble
+## TypeSQL with BERT (ensemble)
 
 Tokens tokenized by BERT's WordPiece tokenizer had to be rejoined into WikiSQL tokens as otherwise the SQL generation task would not work (due to BERT tokenizer's sub-word splitting). See files `retokenizer.py` and `bert_utils.py` for implementation of the retokenization.
 
 Moreover, I extended TypeSQL's single model approach with an ensemble method (weighted averaging) - both TypeSQL nets are learning simultaneously (forward step and backprop are computed for both nets) but only one of the two performs the final translation task (always the same network) given the averaged predictions of both sytems - to monitor dev performance of the ensemble. The respective best model of each member of the ensemble is saved in a separate folder to load into memory for testing.
 
-## TypeSQL with POS ensemble
+## TypeSQL with POS (ensemble)
 
 Natural language questions were tagged using NLTK's POS tagger.  Ensemble of TypeSQL with POS embeddings.
 
