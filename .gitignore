@@ -685,3 +685,10 @@ saved_model_kg_single/epoch88.cond_model
 saved_model_kg_single/epoch88.cond_model
 saved_model_kg_single/epoch88.cond_embed
 results/100d_bert_max-pool_types_single_kg.json
+__pycache__/bert_utils.cpython-37.pyc
+typesql/__pycache__/utils.cpython-37.pyc
+typesql/lib/__pycache__/dbengine.cpython-37.pyc
+typesql/model/__pycache__/sqlnet.cpython-37.pyc
+typesql/model/modules/__pycache__/condtion_op_str_predict.cpython-37.pyc
+typesql/model/modules/__pycache__/sel_condition_predict.cpython-37.pyc
+typesql/model/modules/__pycache__/word_embedding.cpython-37.pyc
