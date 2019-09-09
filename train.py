@@ -5,6 +5,7 @@ import logging
 import matplotlib
 import torch
 
+from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -353,16 +354,18 @@ if __name__ == '__main__':
         ENSEMBLE = '_homogeneous'
     DB = '_kg' if args.db_content==0 else '_db'
     
+    DATETIME = datetime.now().strftime('%H_%M_%S_%d_%m_%Y')
+    
     if args.BERT:
         if args.merged=='max':
             MERGED='_max-pool'
         elif args.merged=='avg':
             MERGED='_avg'
-        LOG_FILENAME = DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.log'
+        LOG_FILENAME = DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+DATETIME+'.log'
         with open('./results/'+DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
             json.dump(accs, f)
     else:
-        LOG_FILENAME = DIMS+POS+TYPES+ENSEMBLE+DB+'.log'
+        LOG_FILENAME = DIMS+POS+TYPES+ENSEMBLE+DB+DATETIME+'.log'
         with open('./results/'+DIMS+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
             json.dump(accs, f)
     
