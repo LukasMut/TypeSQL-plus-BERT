@@ -57,7 +57,7 @@ class Retokenizer:
         assert isinstance(arbitrary_id, int), 'token ids must be integers'
         if not self.embeddings:
             # create placeholder values for embeddings to compute loop over all arrays simultaneously
-            bert_embeddings = [0 for _ in range(len(bert_toks))]
+            bert_embeddings = np.zeros(len(bert_toks), dtype=int)
             assert len(bert_toks) == len(bert_ids) == len(bert_embeddings), 'all arrays must have the same number of elements'
         j = 0
         for i, (bert_tok, bert_id, bert_embedding) in enumerate(zip(bert_toks, bert_ids, bert_embeddings)):
@@ -131,17 +131,14 @@ class Retokenizer:
                     for _ in range(len(indexes)):
                         bert_toks.pop(indexes[0])
                         bert_ids.pop(indexes[0])
-                        if self.embeddings:
-                            bert_embeddings = np.delete(bert_embeddings, indexes[0], axis=0)
-                        else:
-                            bert_embeddings.pop(indexes[0])
+                        bert_embeddings = np.delete(bert_embeddings, indexes[0], axis=0)
                     bert_toks.insert(indexes[0], rejoined_tok)
                     bert_ids.insert(indexes[0], arbitrary_id)
                     if self.embeddings:
                         bert_embeddings = np.insert(bert_embeddings, indexes[0], merged_embedding, axis=0)
                     else:
                         # insert placeholder value
-                        bert_embeddings.insert(indexes[0], 0)
+                        bert_embeddings = np.insert(bert_embeddings, indexes[0], 0, axis=0)
                     arbitrary_id += 1
                     j += 1
                     break
