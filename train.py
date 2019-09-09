@@ -1,9 +1,11 @@
-import json
-import torch
-import datetime
 import argparse
-import numpy as np
+import datetime
+import json
+import logging
 import matplotlib
+import torch
+
+import numpy as np
 import matplotlib.pyplot as plt
 
 from typesql.utils import *
@@ -356,11 +358,18 @@ if __name__ == '__main__':
             MERGED='_max-pool'
         elif args.merged=='avg':
             MERGED='_avg'
+        LOG_FILENAME = DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.log'
         with open('./results/'+DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
             json.dump(accs, f)
     else:
+        LOG_FILENAME = DIMS+POS+TYPES+ENSEMBLE+DB+'.log'
         with open('./results/'+DIMS+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
-            json.dump(accs, f)     
+            json.dump(accs, f)
+    
+    accs = json.dumps(accs)
+ 
+    logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO)
+    logging.info(accs)
 
     plt.clf() # clear current figure, but leave window opened
     plot_accs(list(range(1,101)), train_accs, val_accs)
@@ -368,7 +377,7 @@ if __name__ == '__main__':
         plt.savefig('./plots/accs/'+DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.png')
     else:
         plt.savefig('./plots/accs/'+DIMS+POS+TYPES+ENSEMBLE+DB+'.png')
-    plt.close() #plt.clf()
+    plt.close()
     plot_losses(list(range(1,101)), losses)
     if args.BERT:
         plt.savefig('./plots/losses/'+DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.png')
