@@ -684,3 +684,4 @@ saved_model_kg_single/epoch88.cond_embed
 saved_model_kg_single/epoch88.cond_model
 saved_model_kg_single/epoch88.cond_model
 saved_model_kg_single/epoch88.cond_embed
+results/100d_bert_max-pool_types_single_kg.json
