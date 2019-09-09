@@ -375,7 +375,7 @@ if __name__ == '__main__':
     logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO)
     logging.info(accs)
 
-    plt.clf() # clear current figure, but leave window opened
+    plt.clf()
     plot_accs(list(range(1,101)), train_accs, val_accs)
     if args.BERT:
         plt.savefig('./plots/accs/'+DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.png')
