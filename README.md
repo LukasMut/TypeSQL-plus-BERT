@@ -19,10 +19,9 @@ Source code accompanying TypeSQL's NAACL 2018 paper:[TypeSQL: Knowledge-based Ty
 #### Environment Setup
 
 1. The code uses Python 3.7, [Pytorch 1.1.0](https://pytorch.org/previous-versions/) and [Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers).
-2. Install Python dependency: `pip install -r requirements.txt`
+2. Install Python dependencies: `pip install -r requirements.txt`
 3. Install Pytorch: `pip install pytorch`
 4. Install Pytorch Transformers: `pip install pytorch-transformers`. Go to their repo for more information about requirements and dependencies.
-5. Install NLTK: `pip install nltk`
 
 #### Download Data and Embeddings
 
