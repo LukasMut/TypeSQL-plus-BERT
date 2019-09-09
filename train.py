@@ -5,7 +5,6 @@ import logging
 import matplotlib
 import torch
 
-from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -356,7 +355,7 @@ if __name__ == '__main__':
         ENSEMBLE = '_homogeneous'
     DB = '_kg' if args.db_content==0 else '_db'
     
-    DATETIME = datetime.now().strftime('%H_%M_%S_%d_%m_%Y')
+    DATETIME = datetime.datetime.now().strftime('%H_%M_%S_%d_%m_%Y')
     
     if args.BERT:
         if args.merged=='max':
