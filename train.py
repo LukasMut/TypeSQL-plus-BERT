@@ -372,7 +372,7 @@ if __name__ == '__main__':
     
     accs = json.dumps(accs)
  
-    logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO)
+    logging.basicConfig(filename='./log_files/'+LOG_FILENAME, level=logging.INFO)
     logging.info(accs)
 
     plt.clf()
