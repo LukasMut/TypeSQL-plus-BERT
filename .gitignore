@@ -732,3 +732,11 @@ log_files/100d_bert_avg_types_single_kg10_30_39_10_09_2019.log
 log_files/100d_bert_max-pool_pos_types_single_kg08_00_03_10_09_2019.log
 log_files/100d_bert_max-pool_types_single_kg10_00_13_10_09_2019.log
 log_files/100d_pos_types_single_kg10_09_18_10_09_2019.log
+log_files/100d_types_single_kg11_05_11_10_09_2019.log
+plots/accs/100d_types_single_kg.png
+plots/losses/100d_types_single_kg.png
+results.ipynb
+results/100d_types_single_kg.json
+results.ipynb
+results.ipynb
+results.ipynb
