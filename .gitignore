@@ -727,3 +727,8 @@ typesql/model/__pycache__/sqlnet.cpython-37.pyc
 typesql/lib/__pycache__/dbengine.cpython-37.pyc
 typesql/__pycache__/utils.cpython-37.pyc
 __pycache__/bert_utils.cpython-37.pyc
+log_files/100d_bert_avg_pos_types_single_kg08_09_27_10_09_2019.log
+log_files/100d_bert_avg_types_single_kg10_30_39_10_09_2019.log
+log_files/100d_bert_max-pool_pos_types_single_kg08_00_03_10_09_2019.log
+log_files/100d_bert_max-pool_types_single_kg10_00_13_10_09_2019.log
+log_files/100d_pos_types_single_kg10_09_18_10_09_2019.log
