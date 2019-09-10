@@ -228,8 +228,8 @@ if __name__ == '__main__':
             MERGED='_max-pool'
         elif args.merged=='avg':
             MERGED='_avg'
-        with open('./results/'+DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
+        with open('./results_test/'+DIMS+BERT+MERGED+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
             json.dump(accs, f)
     else:
-        with open('./results/'+DIMS+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
+        with open('./results_test/'+DIMS+POS+TYPES+ENSEMBLE+DB+'.json', 'w') as f:
             json.dump(accs, f)        
