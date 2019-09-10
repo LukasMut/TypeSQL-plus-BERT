@@ -62,14 +62,17 @@ if __name__ == '__main__':
     print()
     
     ## FOR BERT implementation: SQL data must be updated with (rejoined)
-    ## tokens pre-processed by BERT's WordPiece model and corresponding BERT ids
+    ## tokens tokenized by BERT's WordPiece model and corresponding BERT ids
     if args.BERT:    
-        sql_data_updated = update_sql_data(sql_data)
-        #sql_data = remove_nonequal_questions(sql_data_updated)
-        val_sql_data_updated = update_sql_data(val_sql_data)
-        #val_sql_data = remove_nonequal_questions(val_sql_data_updated)
-        test_sql_data_updated = update_sql_data(test_sql_data)
+        sql_data = update_sql_data(sql_data)
+        #sql_data = remove_nonequal_questions(sql_data)
+        
+        val_sql_data = update_sql_data(val_sql_data)
+        #val_sql_data = remove_nonequal_questions(val_sql_data)
+        
+        test_sql_data = update_sql_data(test_sql_data)
         #test_sql_data = remove_nonequal_questions(test_sql_data_updated)
+        
         print("SQL data has been updated and now consists of bert-preprocessed tokens and corresponding IDs")
         print()
         print("Loading bert embeddings...")
