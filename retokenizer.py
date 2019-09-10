@@ -7,8 +7,8 @@ class Retokenizer:
     
     def __init__(self, merge, embeddings: bool):
         """
-            Args: init method takes a string for specifing the merging computation of embeddings 
-                  and a boolean value that indicates whether embeddings are passed to the retokenizer.
+            Args: string for specifing the merging computation of embeddings 
+                  and boolean value that indicates whether embeddings are passed to the retokenizer.
         """
         self.merge = merge
         #set embeddings to False to compute token rejoining step faster (for updating sql data)
@@ -16,8 +16,8 @@ class Retokenizer:
     
     def rejoin(self, bert_toks, i, typesql_tok):
         """
-            Args: Tokens tokenized by Bert's WordPiece tokenizer, an index and TypeSQL tokenized tokens.
-            Return: Rejoined tokens and their corresponding indexes in the question.
+            Args: tokens tokenized by Bert's WordPiece tokenizer, an index and TypeSQL tokenized tokens.
+            Return: rejoined tokens and their corresponding indexes in the question.
         """
         indexes=[]
         str_length=0
@@ -51,7 +51,7 @@ class Retokenizer:
             Args: TypeSQL tokens, tokens tokenized by Bert's WordPiece tokenizer, corresponding BERT ids,
                   arbitrary id that will be used instead of original BERT id for (new) rejoined tokens, 
                   BERT context embeddings.
-            Return: Rejoined tokens, corresponding ids, merged BERT embeddings and (new) arbitrary id to start the
+            Return: rejoined tokens, corresponding ids, merged BERT embeddings and (new) arbitrary id to start the
                     next iteration. 
         """
         assert isinstance(arbitrary_id, int), 'token ids must be integers'
