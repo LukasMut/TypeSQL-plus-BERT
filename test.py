@@ -123,13 +123,13 @@ if __name__ == '__main__':
             
         elif args.ensemble == 'homogeneous' and args.BERT:
             
-            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types, POS=args.POS)
-            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=False)
+            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=True, POS=True)
+            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=True, POS=False)
 
         elif args.ensemble == 'homogeneous' and not args.BERT:
             
-            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=self.BERT, types=args.types, POS=args.POS)
-            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=args.types, POS=False)
+            model_1 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=True, POS=True)
+            model_2 = SQLNet(word_emb, N_word=N_word, gpu=GPU, trainable_emb=args.train_emb, db_content=args.db_content, word_emb_bert=bert_tuple, BERT=args.BERT, types=True, POS=False)
        
         model = [model_1, model_2]
 
