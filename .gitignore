@@ -1342,3 +1342,6 @@ results_test/100d_bert_max-pool_pos_types_single_kg.json
 results_test/100d_bert_max-pool_types_single_kg.json
 results_test/100d_pos_types_single_kg.json
 results_test/100d_types_single_kg.json
+plots/accs/100d_bert_avg_types_homogeneous_kg.png
+plots/losses/100d_bert_avg_types_homogeneous_kg.png
+results/100d_bert_avg_types_homogeneous_kg.json
