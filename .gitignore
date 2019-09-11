@@ -1330,3 +1330,8 @@ typesql/model/__pycache__/sqlnet.cpython-37.pyc
 typesql/model/modules/__pycache__/condtion_op_str_predict.cpython-37.pyc
 typesql/model/modules/__pycache__/sel_condition_predict.cpython-37.pyc
 typesql/model/modules/__pycache__/word_embedding.cpython-37.pyc
+log_files/100d_bert_avg_pos_types_single_kg00_40_57_11_09_2019.log
+log_files/100d_bert_avg_types_single_kg02_39_42_11_09_2019.log
+log_files/100d_bert_max-pool_pos_types_single_kg02_50_27_11_09_2019.log
+log_files/100d_pos_types_single_kg02_08_37_11_09_2019.log
+log_files/100d_types_single_kg01_49_41_11_09_2019.log
