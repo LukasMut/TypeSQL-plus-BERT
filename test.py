@@ -21,6 +21,8 @@ if __name__ == '__main__':
             help='0: use knowledge graph type, 1: use db content to get type info')
     parser.add_argument('--train_emb', action='store_true',
             help='Use trained word embedding for SQLNet.')
+    parser.add_argument('--dim', type=int, default=100,
+            help='Dimensionality of word vectors used to represent natural language questions.')
     parser.add_argument('--BERT', action='store_true',
             help='If provided: Use BERT context embeddings, Else: use GloVe embeddings')
     parser.add_argument('--merged', type=str, default='avg',
@@ -35,8 +37,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
     
-    # N_word = 600
-    N_word=100
+    N_word=args.dim
     B_word=42
     if args.toy:
         USE_SMALL=True
@@ -59,14 +60,14 @@ if __name__ == '__main__':
     if args.db_content == 0:
         
         if N_word == 100:
-            word_emb = load_word_and_type_emb('./glove/glove.6B.50d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
+            word_emb = load_word_and_type_emb('./glove/glove.6B.50d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False, N_word=int(N_word/2))
         elif N_word == 600:
-            word_emb = load_word_and_type_emb('./glove/glove.42B.300d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False)
+            word_emb = load_word_and_type_emb('./glove/glove.42B.300d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt',val_sql_data, val_table_data, args.db_content, is_list=True, use_htype=False, N_word=int(N_word/2))
     else:
         if N_word == 100:
-            word_emb = load_concat_wemb('./glove/glove.6B.50d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt')
+            word_emb = load_concat_wemb('./glove/glove.6B.50d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt', dim=int(N_word/2))
         elif N_word == 600:
-            word_emb = load_concat_wemb('./glove/glove.42B.300d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt')
+            word_emb = load_concat_wemb('./glove/glove.42B.300d.txt', './para-nmt-50m/data/paragram_sl999_czeng.txt', dim=int(N_word/2))
             
     
     if args.BERT:

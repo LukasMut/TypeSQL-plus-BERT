@@ -446,7 +446,7 @@ def epoch_acc(models, batch_size, sql_data, table_data, pred_entry, db_content, 
  
     return tot_acc_num / len(sql_data), one_acc_num / len(sql_data)
 
-def load_para_wemb(file_name):
+def load_para_wemb(file_name, dim=50):
     f = io.open(file_name, 'r', encoding='utf-8')
     lines = f.readlines()
     ret = {}
@@ -455,11 +455,12 @@ def load_para_wemb(file_name):
     for (n,line) in enumerate(lines):
         info = line.strip().split(' ')
         if info[0].lower() not in ret:
-            #ret[info[0]] = np.array(map(lambda x:float(x), info[1:]))
-            
-            #NOTE: use 50d for BERT 100d model to concatenate with GloVe 50d
-            ret[info[0]] = np.array(list(map(lambda x:float(x), info[1:51])))
-            
+            if dim == 50:
+                ret[info[0]] = np.array(list(map(lambda x:float(x), info[1:dim+1])))
+            elif dim == 300:
+                ret[info[0]] = np.array(map(lambda x:float(x), info[1:]))
+            else:
+                raise Exception('Dimensionality of paraphrase embeddings has to be 50d or 300d')
     return ret
 
 
@@ -469,13 +470,10 @@ def load_comb_wemb(fn1, fn2):
     comb_emb = {k: wemb1.get(k, 0) + wemb2.get(k, 0) for k in set(wemb1) | set(wemb2)}
     return comb_emb
 
-def load_concat_wemb(fn1, fn2):
+def load_concat_wemb(fn1, fn2, dim=50):
     wemb1 = load_word_emb(fn1)
-    wemb2 = load_para_wemb(fn2)
-    
-    #backup = np.zeros(300, dtype=np.float32) #use 300d for BERT 600d model to concatenate with GloVe 300d
-    backup = np.zeros(50, dtype=np.float32) #use 50d for BERT 100d model to concatenate with GloVe 50d
-    
+    wemb2 = load_para_wemb(fn2, dim=dim)
+    backup = np.zeros(dim, dtype=np.float32)
     # check whether shapes of word and para embeddings match (should have same dimensionality)
     assert next(iter(wemb1.values())).shape == next(iter(wemb2.values())).shape == backup.shape, 'embeddings must have same dimensionality'
     comb_emb = {k: np.concatenate((wemb1.get(k, backup), wemb2.get(k, backup)), axis=0) for k in set(wemb1) | set(wemb2)}
@@ -494,8 +492,8 @@ def load_word_emb(file_name, load_used=False, use_small=False):
                     break
                 info = line.strip().split(' ')
                 if info[0].lower() not in ret:
-                    ## why not ret[info[0].lower()] or if info[0] not in ret? ##
-                    # example: if 'bert' not in ret: ret['Bert'] = vector;
+                    #NOTE: why not ret[info[0].lower()] or if info[0] not in ret?
+                    #example: if 'bert' not in ret: ret['Bert'] = vector;
                     #          next iter: if 'bert' not in ret: ret['bert'] = vector;
                     
                     # converting map into list is necessary as otherwise element of np.array is of type object
@@ -510,13 +508,11 @@ def load_word_emb(file_name, load_used=False, use_small=False):
         return w2i, word_emb_val
 
 
-def load_word_and_type_emb(fn1, fn2, sql_data, table_data, db_content, is_list=False, use_htype=False):
+def load_word_and_type_emb(fn1, fn2, sql_data, table_data, db_content, is_list=False, use_htype=False, N_word=50):
     word_to_idx = {'<UNK>':0, '<BEG>':1, '<END>':2}
     word_num = 3
-    #N_word = 300 #use 300d for BERT 600d model to concatenate with GloVe 300d
-    N_word = 50 #use 50d for BERT 100d model to concatenate with GloVe 50d
     embs = [np.zeros(N_word, dtype=np.float32) for _ in range(word_num)]
-    _, _, word_emb = load_concat_wemb(fn1, fn2)
+    _, _, word_emb = load_concat_wemb(fn1, fn2, dim=N_word)
 
     if is_list:
         for sql in sql_data:
