@@ -44,8 +44,9 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
  --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
  --train_emb (Train word embeddings)
  --BERT (Use Bert embeddings instead of GloVe)
+ --merged (use max-pooled or averaged BERT embeddings)
+ --POS (Compute POS embeddings and concatenate BERT or GloVe with POS embeddings)
  --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
- --merged (use max-pooled, averaged or summed BERT embeddings)
  --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
 
@@ -60,15 +61,16 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
   --db_content 1
   --train_emb (Train word embeddings)
   --BERT (Use Bert embeddings instead of GloVe)
+  --merged (use max-pooled or averaged BERT embeddings)
+  --POS (Compute POS embeddings and concatenate BERT or GloVe with POS embeddings)
   --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
-  --merged (use max-pooled, averaged or summed BERT embeddings)
   --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
  
   
 #### Test Models
 
-1. Test Model with knowledge graph types:
+1. Test Model with knowledge graph types (*performance measured in logical form accuracy*):
 ```
 python test.py
 
@@ -77,11 +79,12 @@ python test.py
 --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
 --train_emb (Use trained word embeddings for SQLNet)
 --BERT (Use Bert embeddings instead of GloVe)
+--merged (use max-pooled or averaged BERT embeddings)
+--POS (Compute POS embeddings and concatenate BERT or GloVe with POS embeddings)
 --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
---merged (use max-pooled, averaged or summed BERT embeddings)
 --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
-2. Test Model with knowledge graph types:
+2. Test Model with knowledge graph types (*performance measured in execution accuracy*):
 ```
 python test.py
 
@@ -91,8 +94,9 @@ python test.py
 --db_content 1
 --train_emb (Use trained word embeddings for SQLNet)
 --BERT (Use Bert embeddings instead of GloVe)
+--merged (use max-pooled or averaged BERT embeddings)
+--POS (Compute POS embeddings and concatenate BERT or GloVe with POS embeddings)
 --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
---merged (use max-pooled, averaged or summed BERT embeddings)
 --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
 
