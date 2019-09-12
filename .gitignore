@@ -1351,3 +1351,7 @@ log_files/100d_bert_avg_types_mixed_kg22_42_01_11_09_2019.log
 plots/accs/100d_bert_avg_types_mixed_kg.png
 plots/losses/100d_bert_avg_types_mixed_kg.png
 results/100d_bert_avg_types_mixed_kg.json
+plots/accs/100d_types_homogeneous_kg.png
+plots/losses/100d_types_homogeneous_kg.png
+results/100d_types_homogeneous_kg.json
+log_files/100d_types_homogeneous_kg13_14_30_12_09_2019.log
