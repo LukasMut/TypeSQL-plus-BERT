@@ -95,7 +95,7 @@ python test.py
 --sd_1 saved_model_con_xxx1 (load single model)
 --sd_2 saved_model_con_xxx2 (load second model, if ensemble computation)
 --db_content 1
---train_emb (use trained word embeddings for SQLNet
+--train_emb (use trained word embeddings for SQLNet)
 --dim (use BERT 600d and GloVe 300d + Para 300d or BERT 100d and GloVe 50d + Para 50d respectively)
 --BERT (use Bert embeddings instead of GloVe)
 --merged (use max-pooled or averaged BERT embeddings)
