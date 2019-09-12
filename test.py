@@ -54,9 +54,6 @@ if __name__ == '__main__':
             TRAIN_DB, DEV_DB, TEST_DB = load_dataset(use_small=USE_SMALL)
     print()
     
-    #word_emb = load_word_emb('glove/glove.%dB.%dd.txt'%(B_word,N_word), \
-    #        load_used=args.train_emb, use_small=USE_SMALL)
-    
     if args.db_content == 0:
         
         if N_word == 100:
