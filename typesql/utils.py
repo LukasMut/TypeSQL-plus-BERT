@@ -458,7 +458,7 @@ def load_para_wemb(file_name, dim=50):
             if dim == 50:
                 ret[info[0]] = np.array(list(map(lambda x:float(x), info[1:dim+1])))
             elif dim == 300:
-                ret[info[0]] = np.array(map(lambda x:float(x), info[1:]))
+                ret[info[0]] = np.array(list(map(lambda x:float(x), info[1:])))
             else:
                 raise Exception('Dimensionality of paraphrase embeddings has to be 50d or 300d')
     return ret
