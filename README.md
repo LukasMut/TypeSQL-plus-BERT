@@ -45,7 +45,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
  --train_emb (Train word embeddings)
  --BERT (Use Bert embeddings instead of GloVe)
  --merged (use max-pooled or averaged BERT embeddings)
- --POS (Compute POS embeddings and concatenate BERT or GloVe with POS embeddings)
+ --POS (compute POS embeddings and concatenate with BERT or GloVe)
  --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
  --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
@@ -62,7 +62,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
   --train_emb (Train word embeddings)
   --BERT (Use Bert embeddings instead of GloVe)
   --merged (use max-pooled or averaged BERT embeddings)
-  --POS (Compute POS embeddings and concatenate BERT or GloVe with POS embeddings)
+  --POS (compute POS embeddings and concatenate with BERT or GloVe)
   --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
   --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
@@ -77,10 +77,10 @@ python test.py
 --toy (use toy dataset)
 --sd_1 saved_model_kg_single (set model save directory for single model)
 --sd_2 saved_model_kg_second (set save directory for second model, if ensemble computation)
---train_emb (Use trained word embeddings for SQLNet)
---BERT (Use Bert embeddings instead of GloVe)
+--train_emb (use trained word embeddings for SQLNet)
+--BERT (use Bert embeddings instead of GloVe)
 --merged (use max-pooled or averaged BERT embeddings)
---POS (Compute POS embeddings and concatenate BERT or GloVe with POS embeddings)
+--POS (compute POS embeddings and concatenate with BERT or GloVe)
 --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
 --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
@@ -92,10 +92,10 @@ python test.py
 --sd_1 saved_model_con_single (load single model)
 --sd_2 saved_model_con_second (load second model, if ensemble computation)
 --db_content 1
---train_emb (Use trained word embeddings for SQLNet)
---BERT (Use Bert embeddings instead of GloVe)
+--train_emb (use trained word embeddings for SQLNet)
+--BERT (use Bert embeddings instead of GloVe)
 --merged (use max-pooled or averaged BERT embeddings)
---POS (Compute POS embeddings and concatenate BERT or GloVe with POS embeddings)
+--POS (compute POS embeddings and concatenate with BERT or GloVe)
 --types (don't pass if you want to use BERT embeddings only - no concatenation with type embeddings)
 --ensemble (single model, mixed ensemble (GloVe and BERT), homogeneous ensemble (e.g., (GloVe and GloVe) XOR (BERT and BERT)))
 ```
