@@ -43,7 +43,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
  --sd_1 saved_model_kg_xxx1 (set model save directory for single model)
  --sd_2 saved_model_kg_xxx2 (set save directory for second model, if ensemble computation)
  --train_emb (train word embeddings)
- --dim (use BERT 600d or 100d and GloVe 50d + Para 50d or GloVe 300d + Para 300d respectively)
+ --dim (use BERT 600d and GloVe 300d + Para 300d or BERT 100d and GloVe 50d + Para 50d respectively)
  --BERT (use Bert embeddings instead of GloVe)
  --merged (use max-pooled or averaged BERT embeddings)
  --POS (compute POS embeddings and concatenate with BERT or GloVe)
@@ -61,7 +61,7 @@ Neither do we use BERT embeddings to predict aggregate values in the SELECT clau
   --sd_2 saved_model_con_xxx2 (set save directory for second model, if ensemble computation)
   --db_content 1
   --train_emb (train word embeddings)
-  --dim (use BERT 600d or 100d and GloVe 50d + Para 50d or GloVe 300d + Para 300d respectively)
+  --dim (use BERT 600d and GloVe 300d + Para 300d or BERT 100d and GloVe 50d + Para 50d respectively)
   --BERT (use Bert embeddings instead of GloVe)
   --merged (use max-pooled or averaged BERT embeddings)
   --POS (compute POS embeddings and concatenate with BERT or GloVe)
@@ -80,7 +80,7 @@ python test.py
 --sd_1 saved_model_kg_xxx1 (load single model)
 --sd_2 saved_model_kg_xxx2 (load second model, if ensemble computation)
 --train_emb (use trained word embeddings for SQLNet)
---dim (use BERT 600d or 100d and GloVe 50d + Para 50d or GloVe 300d + Para 300d respectively)
+--dim (use BERT 600d and GloVe 300d + Para 300d or BERT 100d and GloVe 50d + Para 50d respectively)
 --BERT (use Bert embeddings instead of GloVe)
 --merged (use max-pooled or averaged BERT embeddings)
 --POS (compute POS embeddings and concatenate with BERT or GloVe)
@@ -96,7 +96,7 @@ python test.py
 --sd_2 saved_model_con_xxx2 (load second model, if ensemble computation)
 --db_content 1
 --train_emb (use trained word embeddings for SQLNet
---dim (use BERT 600d or 100d and GloVe 50d + Para 50d or GloVe 300d + Para 300d respectively)
+--dim (use BERT 600d and GloVe 300d + Para 300d or BERT 100d and GloVe 50d + Para 50d respectively)
 --BERT (use Bert embeddings instead of GloVe)
 --merged (use max-pooled or averaged BERT embeddings)
 --POS (compute POS embeddings and concatenate with BERT or GloVe)
