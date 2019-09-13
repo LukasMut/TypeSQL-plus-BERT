@@ -1373,3 +1373,10 @@ log_files/100d_bert_avg_types_mixed_kg18_34_49_12_09_2019.log
 plots/accs/100d_bert_avg_pos_types_homogeneous_kg.png
 plots/losses/100d_bert_avg_pos_types_homogeneous_kg.png
 results/100d_bert_avg_pos_types_homogeneous_kg.json
+typesql/__pycache__/utils.cpython-37.pyc
+typesql/lib/__pycache__/dbengine.cpython-37.pyc
+typesql/model/__pycache__/sqlnet.cpython-37.pyc
+typesql/model/modules/__pycache__/condtion_op_str_predict.cpython-37.pyc
+typesql/model/modules/__pycache__/sel_condition_predict.cpython-37.pyc
+typesql/model/modules/__pycache__/word_embedding.cpython-37.pyc
+__pycache__/bert_utils.cpython-37.pyc
