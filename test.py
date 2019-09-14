@@ -202,13 +202,13 @@ if __name__ == '__main__':
     accs['dev']['agg']=dev_acc[1][0]
     accs['dev']['sel']=dev_acc[1][1]
     accs['dev']['where']=dev_acc[1][2]
-    accs['dev']['lf_acc']=dev_acc[0]
+    accs['dev']['qm_acc']=dev_acc[0]
     accs['dev']['ex_acc']=dev_exec_acc
     
     accs['test']['agg']=test_acc[1][0]
     accs['test']['sel']=test_acc[1][1]
     accs['test']['where']=test_acc[1][2]
-    accs['test']['lf_acc']=test_acc[0]
+    accs['test']['qm_acc']=test_acc[0]
     accs['test']['ex_acc']=test_exec_acc
     
     DIMS = '100d' if N_word==100 else '600d'
