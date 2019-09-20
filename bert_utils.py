@@ -13,8 +13,9 @@ from pytorch_transformers import *
 from typesql.utils import *
 from retokenizer import Retokenizer
 
-def concatenate_sql_data(sql_data_train, sql_data_val):
+def concatenate_sql_data(sql_data_train, sql_data_val, sql_data_test):
     sql_data_train.extend(sql_data_val)
+    sql_data_train.extend(sql_data_test)
     return sql_data_train
 
 def count_context_toks(tok = 'the'):

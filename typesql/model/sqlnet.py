@@ -34,12 +34,16 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
 
         self.max_col_num = 45
         self.max_tok_num = 200
-        self.SQL_TOK = ['<UNK>', '<END>', 'WHERE', 'AND',
-                'EQL', 'GT', 'LT', '<BEG>']
-        self.COND_OPS = ['EQL', 'GT', 'LT']
         self.BERT = BERT
         self.POS = POS
-        
+        if self.BERT:
+            self.SQL_TOK = ['<UNK>', '<END>', '[SEP]', 'WHERE', 'AND',
+                    'EQL', 'GT', 'LT', '<BEG>', '[CLS]']
+        else:
+            self.SQL_TOK = ['<UNK>', '<END>', 'WHERE', 'AND',
+                    'EQL', 'GT', 'LT', '<BEG>']              
+        self.COND_OPS = ['EQL', 'GT', 'LT']
+  
         if word_emb_bert is not None:
             self.idx2word, self.word_emb_bert = word_emb_bert
             print("Using BERT context embeddings for questions")
@@ -90,10 +94,23 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
         cur_seq = []
         tok_gt_1 = [t for t in all_toks if len(t) > 1]
         if this_str in all_toks:
-            #if self.BERT:
-            #    all_str = [['[CLS]'], this_str, ['[SEP]']]
-            #else:
-            all_str = [['<BEG>'], this_str, ['<END>']]
+            if self.BERT:
+                #if len(this_str) == 1:
+                all_str = [['[CLS]'], this_str, ['[SEP]']]
+                #TODO: this approach could be useful (see SQLova 2019)
+                #approach: separate headers by [SEP] tokens and start with [CLS]
+                #elif len(this_str) > 1:
+                #    all_str = []
+                #    for i, s in enumerate(this_str):
+                #        if i == 0:
+                #            all_str.append('[CLS]'])
+                #        else:
+                #            all_str.append('[SEP]')
+                #        all_str.append([s])
+                #        if i == len(this_str)-1:
+                #            all_str.append('[SEP]')
+            else:
+                all_str = [['<BEG>'], this_str, ['<END>']]  
             cur_seq = [all_toks.index(s) if s in all_toks else 0 for s in all_str]
         elif len(tok_gt_1) > 0:
             flag = False
@@ -105,19 +122,19 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                         all_str = [tgt] + not_tgt
                     else:
                         all_str = [tgt]
-                    #if self.BERT:
-                    #    beg_ind = all_toks.index(['[CLS]']) if ['[CLS]'] in all_toks else 0
-                    #    end_ind = all_toks.index(['[SEP]']) if ['[SEP]'] in all_toks else 0
-                    #else:
-                    beg_ind = all_toks.index(['<BEG>']) if ['<BEG>'] in all_toks else 0
-                    end_ind = all_toks.index(['<END>']) if ['<END>'] in all_toks else 0
+                    if self.BERT:
+                        beg_ind = all_toks.index(['[CLS]']) if ['[CLS]'] in all_toks else 0
+                        end_ind = all_toks.index(['[SEP]']) if ['[SEP]'] in all_toks else 0
+                    else:
+                        beg_ind = all_toks.index(['<BEG>']) if ['<BEG>'] in all_toks else 0
+                        end_ind = all_toks.index(['<END>']) if ['<END>'] in all_toks else 0
                     cur_seq = sorted([all_toks.index(s) if s in all_toks else 0 for s in all_str])
                     cur_seq = [beg_ind] + cur_seq + [end_ind]
                 elif set(this_str).issubset(tgt):
-                    #if self.BERT:
-                    #   all_str = [['[CLS]'], tgt, ['[SEP]']]
-                    #else:
-                    all_str = [['<BEG>'], tgt, ['<END>']]
+                    if self.BERT:
+                        all_str = [['[CLS]'], tgt, ['[SEP]']]
+                    else:
+                        all_str = [['<BEG>'], tgt, ['<END>']]
                     cur_seq = [all_toks.index(s) if s in all_toks else 0 for s in all_str]
 
                 if len(cur_seq) > 0:
@@ -125,16 +142,16 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                     break
 
             if not flag:
-                #if self.BERT:
-                #    all_str = [['[CLS]']] + [[x] for x in this_str] + [['[SEP]']]
-                #else:
-                all_str = [['<BEG>']] + [[x] for x in this_str] + [['<END>']]
+                if self.BERT:
+                    all_str = [['[CLS]']] + [[x] for x in this_str] + [['[SEP]']]
+                else:
+                    all_str = [['<BEG>']] + [[x] for x in this_str] + [['<END>']]
                 cur_seq = [all_toks.index(s) if s in all_toks else 0 for s in all_str]
         else:
-            #if self.BERT:
-            #    all_str = [['[CLS]']] + [[x] for x in this_str] + [['[SEP]']]
-            #else:
-            all_str = [['<BEG>']] + [[x] for x in this_str] + [['<END>']]
+            if self.BERT:
+                all_str = [['[CLS]']] + [[x] for x in this_str] + [['[SEP]']]
+            else:
+                all_str = [['<BEG>']] + [[x] for x in this_str] + [['<END>']]
             cur_seq = [all_toks.index(s) if s in all_toks else 0 for s in all_str]
 
         return cur_seq
@@ -150,8 +167,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
             st = cur_query.index(u'WHERE')+1 if \
                     u'WHERE' in cur_query else len(cur_query)
             if self.BERT:
-                # all_toks = [['[CLS]']] + cur_q[1] + [['[SEP]']]
-                all_toks = [['<BEG>']] + cur_q[1] + [['<END>']]
+                all_toks = [['[CLS]']] + cur_q[1] + [['[SEP]']]
             else:
                 all_toks = [['<BEG>']] + cur_q + [['<END>']]
             while st < len(cur_query):
@@ -234,12 +250,12 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                 x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
                 # don't use BERT embeddings to predict aggregate value in SELECT clause
                 x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
-                # don't use BERT context embeddings to predict aggregate value in SELECT clause 
+                # don't use BERT embeddings to predict aggregate value in SELECT clause 
                 agg_emb_var = self.embed_layer.gen_agg_batch(q_toks)
             else:
                 x_emb_var, x_len = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=self.BERT)
                 x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q, col, is_list=True, is_q=True, BERT=False)
-                # don't use BERT context embeddings to predict aggregate value in SELECT clause 
+                # don't use BERT embeddings to predict aggregate value in SELECT clause 
                 agg_emb_var = self.embed_layer.gen_agg_batch(q)
             
             # don't use BERT context embeddings to represent columns (!)
@@ -271,7 +287,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                     
         else:
             if self.BERT:
-            # use BERT embeddings to represent questions
+                # use BERT embeddings to represent questions
                 x_emb_var, x_len = self.embed_layer.gen_x_batch(q_ids, col, is_list=True, is_q=True, BERT=self.BERT)
                 # don't use BERT embeddings to predict aggregate value in SELECT clause
                 x_emb_var_agg, x_len_agg = self.embed_layer.gen_x_batch(q_toks, col, is_list=True, is_q=True, BERT=False)
@@ -584,8 +600,7 @@ class SQLNet(nn.Module): # inheriting from parent class nn.Module
                 cur_query['conds'] = []
                 cond_num = np.argmax(cond_num_score[b])
                 if self.BERT:
-                    # maybe rather [['[CLS]']] + q_toks[b] + [['[SEP]']] ?
-                    all_toks = [['<BEG>']] + q_toks[b] + [['<END>']] 
+                    all_toks = [['[CLS]']] + q_toks[b] + [['[SEP]']]
                 else:
                     all_toks = [['<BEG>']] + q[b] + [['<END>']]
                 max_idxes = np.argsort(-cond_col_score[b])[:cond_num]
