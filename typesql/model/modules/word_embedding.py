@@ -81,7 +81,6 @@ class WordEmbedding(nn.Module):
             elif not is_list and BERT:
                 q_val = list(map(lambda x:self.word_emb_bert.get(x, np.zeros(self.N_word, dtype=np.float32)), one_q))
             else:
-                #print(one_q)
                 q_val = []
                 for ws in one_q:
                     emb_list = []
@@ -109,7 +108,7 @@ class WordEmbedding(nn.Module):
                         q_val.append(sum(emb_list) / float(ws_len))
 
             if self.trainable:
-                val_embs.append([1] + q_val + [2])  #<BEG> and <END>
+                val_embs.append([1] + q_val + [2]) #<BEG> and <END>
                 val_len[i] = 1 + len(q_val) + 1
             elif not BERT and (not is_list or is_q):
                 val_embs.append([np.zeros(self.N_word, dtype=np.float32)] + q_val + [np.zeros(self.N_word, dtype=np.float32)])
