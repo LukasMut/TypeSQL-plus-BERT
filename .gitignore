@@ -1512,3 +1512,6 @@ results_test_pos/desktop.ini
 typesql/__pycache__/utils.cpython-37.pyc
 typesql/lib/__pycache__/dbengine.cpython-37.pyc
 .ipynb_checkpoints/bert_embeddings-checkpoint.ipynb
+*.log
+*.png
+*.json
