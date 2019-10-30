@@ -1515,3 +1515,5 @@ typesql/lib/__pycache__/dbengine.cpython-37.pyc
 *.log
 *.png
 *.json
+PAPER/lukas_manuscript_comments_johannes.pdf
+PAPER/report/Free_Topic_Project_Report_LukasMuttenthaler.pdf
